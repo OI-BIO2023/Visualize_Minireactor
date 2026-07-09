@@ -1,58 +1,40 @@
-import { REACTOR_TAGS } from '../config/tags';
 import type { ReactorId } from '../config/reactors';
 import { ReactorSchematic } from './ReactorSchematic';
 import type { QualityFlag } from '../lib/quality';
-import { getReactorActuatorState, formatBool } from '../lib/derived';
+import { formatBool, formatTemperatureValue, getReactorActuatorState } from '../lib/derived';
 
 type Props = {
   reactor: ReactorId;
   data: Record<string, unknown> | null;
   flags: QualityFlag[];
-  activeGas: string;
 };
 
 const value = (entry: unknown) => (typeof entry === 'number' ? entry.toFixed(entry < 10 ? 2 : 1) : entry == null ? '–' : String(entry));
 
-export function ReactorCard({ reactor, data, flags, activeGas }: Props) {
-  const tags = REACTOR_TAGS[reactor];
+export function ReactorCard({ reactor, data, flags }: Props) {
   const state = data ? getReactorActuatorState(data, reactor) : null;
   return (
     <article className="panel reactor-card">
       <div className="panel-header">
         <div>
           <h2>{reactor}</h2>
-          <p className="muted">Gaszuordnung: {activeGas}</p>
         </div>
         <div className="badge-stack">
           <span className="status-badge">{flags.length ? `${flags.length} Hinweis(e)` : 'ok'}</span>
         </div>
       </div>
       <ReactorSchematic reactor={reactor} values={data} />
-      <div className="temp-matrix">
-        {tags.temperature.slice(0, 5).map((tag) => (
-          <div key={tag.key} className="mini-metric">
-            <span>{tag.label}</span>
-            <strong>
-              {value(data?.[tag.key])}
-              {tag.unit ? <span className="metric-unit metric-unit-inline">{tag.unit}</span> : null}
-            </strong>
-          </div>
-        ))}
-      </div>
-      <div className="subgrid">
+      <div className="subgrid reactor-subgrid">
         <div className="subpanel">
-          <h3>Innenraum & Feuchte</h3>
+          <h3>Feuchte</h3>
           <p>
-            Innenraum: <strong>{value(data?.[`T_Innenraum_${reactor}`])}°C</strong>
-          </p>
-          <p>
-            Feuchte oben/unten: <strong>{value(data?.[`HUM_oben_${reactor}`])} / {value(data?.[`HUM_unten_${reactor}`])} %</strong>
+            Oben/unten: <strong>{value(data?.[`HUM_oben_${reactor}`])} / {value(data?.[`HUM_unten_${reactor}`])} %</strong>
           </p>
         </div>
         <div className="subpanel">
           <h3>Wärmeentzug</h3>
           <p>
-            VL/RL: <strong>{value(data?.[`T_VL_${reactor}`])} / {value(data?.[`T_RL_${reactor}`])} °C</strong>
+            VL/RL: <strong>{formatTemperatureValue(data?.[`T_VL_${reactor}`])} / {formatTemperatureValue(data?.[`T_RL_${reactor}`])}</strong>
           </p>
           <p>
             Durchfluss: <strong>{value(data?.[`Q_VL_${reactor}`])} l/min</strong>

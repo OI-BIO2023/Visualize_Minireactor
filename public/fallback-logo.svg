@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" role="img" aria-label="Biologik fallback logo">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="64" rx="14" fill="#0b1220"/>
+  <circle cx="34" cy="32" r="16" fill="url(#g)"/>
+  <path d="M29 32c4-9 8-12 10-12 1 0 2 1 2 2 0 3-4 4-4 10 0 4 3 6 3 10 0 2-2 4-4 4-3 0-6-3-7-14Z" fill="#f8fafc"/>
+  <text x="64" y="38" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="20" font-weight="700">Biologik</text>
+</svg>

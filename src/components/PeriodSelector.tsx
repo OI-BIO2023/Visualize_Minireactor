@@ -1,7 +1,5 @@
-import type { Batch } from '../lib/derived';
-
 type Props = {
-  batches: Batch[];
+  batches: { batch_id: string; empty_at: string | null }[];
   selectedBatchId: string;
   onChange: (batchId: string) => void;
   onManualRangeChange: (range: { start: string; end: string }) => void;
@@ -30,8 +28,8 @@ export function PeriodSelector({ batches, selectedBatchId, onChange, onManualRan
     <section className="panel">
       <div className="panel-header">
         <div>
-          <h2>Periode wÃ¤hlen</h2>
-          <p className="muted">Standard ist der Batch von BefÃ¼llung bis Entleerung.</p>
+          <h2>Periode wählen</h2>
+          <p className="muted">Standard ist der Batch von Befüllung bis Entleerung.</p>
         </div>
       </div>
       <div className="selector-grid">

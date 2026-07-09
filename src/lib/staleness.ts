@@ -1,6 +1,6 @@
 export const DEFAULT_STALE_THRESHOLD_MINUTES = 60;
 
-export const minutesSince = (timestamp: string | null | undefined, now = Date.now(): number | null => {
+export const minutesSince = (timestamp: string | null | undefined, now = Date.now()): number | null => {
   if (!timestamp) return null;
   const parsed = new Date(timestamp).getTime();
   if (!Number.isFinite(parsed)) return null;

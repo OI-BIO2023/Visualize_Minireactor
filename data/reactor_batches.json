@@ -1,0 +1,66 @@
+[
+  {
+    "batch_id": "MI-R1-2026-07-01",
+    "reactor": "R1",
+    "fill_at": "2026-07-01T08:00:00+02:00",
+    "empty_at": "2026-08-15T10:00:00+02:00",
+    "biomass": {
+      "main_material": "Bioabfall",
+      "co_substrate": "Strukturmaterial",
+      "fresh_mass_kg": 125.4,
+      "dry_matter_percent": 32.5,
+      "c_n_ratio": 28,
+      "structure_material_percent": 14,
+      "notes": "Referenzbatch R1"
+    },
+    "operator_notes": "Standardbetrieb"
+  },
+  {
+    "batch_id": "MI-R2-2026-07-02",
+    "reactor": "R2",
+    "fill_at": "2026-07-02T08:00:00+02:00",
+    "empty_at": "2026-08-16T10:00:00+02:00",
+    "biomass": {
+      "main_material": "Bioabfall",
+      "co_substrate": "HolzhÃ¤cksel",
+      "fresh_mass_kg": 127.8,
+      "dry_matter_percent": 31.8,
+      "c_n_ratio": 29,
+      "structure_material_percent": 16,
+      "notes": "Referenzbatch R2"
+    },
+    "operator_notes": "Standardbetrieb"
+  },
+  {
+    "batch_id": "MI-R3-2026-07-03",
+    "reactor": "R3",
+    "fill_at": "2026-07-03T08:00:00+02:00",
+    "empty_at": "2026-08-17T10:00:00+02:00",
+    "biomass": {
+      "main_material": "Bioabfall",
+      "co_substrate": "Strukturmaterial",
+      "fresh_mass_kg": 124.1,
+      "dry_matter_percent": 33.1,
+      "c_n_ratio": 30,
+      "structure_material_percent": 15,
+      "notes": "Referenzbatch R3"
+    },
+    "operator_notes": "Standardbetrieb"
+  },
+  {
+    "batch_id": "MI-R4-2026-07-04",
+    "reactor": "R4",
+    "fill_at": "2026-07-04T08:00:00+02:00",
+    "empty_at": null,
+    "biomass": {
+      "main_material": "Bioabfall",
+      "co_substrate": "HolzhÃ¤cksel",
+      "fresh_mass_kg": 128.6,
+      "dry_matter_percent": 32,
+      "c_n_ratio": 27,
+      "structure_material_percent": 13,
+      "notes": "Laufender Batch"
+    },
+    "operator_notes": "Aktueller Versuch"
+  }
+]

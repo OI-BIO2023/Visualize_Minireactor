@@ -58,8 +58,16 @@ export const validateIdent = (ident: string | null): string => {
 export const normalizeRecord = (item: Record<string, unknown> | undefined | null) => {
   if (!item) return null;
   const normalized = normalizeDynamoPayload(item);
-  const timestamp = extractTimestamp(normalized);
-  return { ...normalized, timestamp };
+  const payload = normalized.payload;
+  const flattened =
+    typeof payload === 'object' && payload !== null && !Array.isArray(payload)
+      ? {
+          ...normalized,
+          ...(payload as Record<string, unknown>)
+        }
+      : normalized;
+  const timestamp = extractTimestamp(flattened);
+  return { ...flattened, timestamp };
 };
 
 export const batchData = batches as Batch[];

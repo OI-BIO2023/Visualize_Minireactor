@@ -1,4 +1,4 @@
-import { minutesBetween } from './time';
+import { hoursSince, minutesBetween } from './time';
 import { normalizeNumeric } from './quality';
 import type { ReactorId } from '../config/reactors';
 
@@ -109,4 +109,61 @@ export const batchDurationHours = (batch: Batch, endTimestamp: string): number =
   return Math.max(0, hoursSince(batch.fill_at, end));
 };
 
-import { hoursSince } from './time';
+export const isTruthySignal = (value: unknown): boolean => {
+  const numeric = normalizeNumeric(value);
+  if (numeric != null) return numeric > 0;
+  return Boolean(value);
+};
+
+export const isActiveValue = (value: unknown): boolean => isTruthySignal(value);
+
+export const formatNumber = (value: unknown, digits = 1): string => {
+  const numeric = normalizeNumeric(value);
+  if (numeric == null) return '–';
+  return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(digits);
+};
+
+export const formatBool = (value: unknown): string => (isTruthySignal(value) ? 'aktiv' : 'inaktiv');
+
+export const boolClass = (value: unknown): string => (isTruthySignal(value) ? 'success' : 'muted');
+
+export const getReactorActuatorState = (row: DataPoint, reactor: ReactorId) => {
+  const suffix = reactor.slice(1);
+  const pump = isTruthySignal(row.P01_P02_Pn);
+  const ventilationCompressor = isTruthySignal(row.C0_1_Komp_AER);
+  const exhaustCompressor = isTruthySignal(row.C0_2_Komp_AER);
+  const irrigation = isTruthySignal(row[`Q_IRR_${reactor}`]) && pump;
+  const heatExtraction = isTruthySignal(row[`V${suffix}_1_V_VL`]) && pump;
+  const ventilation = isTruthySignal(row[`V${suffix}_3_V_AER`]) && ventilationCompressor;
+  const exhaust = isTruthySignal(row[`V${suffix}_2_V_AER`]) && exhaustCompressor;
+  const freshWater = isTruthySignal(row[`V${suffix}_4_V_FW`]) && pump;
+
+  return {
+    irrigation,
+    heatExtraction,
+    ventilation,
+    exhaust,
+    freshWater,
+    pump,
+    ventilationCompressor,
+    exhaustCompressor
+  };
+};
+
+export const isReactorActionActive = (row: DataPoint, reactor: ReactorId, action: 'irrigation' | 'heatExtraction' | 'ventilation' | 'exhaust' | 'freshWater') =>
+  getReactorActuatorState(row, reactor)[action];
+
+export const getExhaustAnalysisState = (row: DataPoint): { active: boolean; reactor: ReactorId | 'unassigned' | 'ambiguous' } => {
+  if (!isTruthySignal(row.C0_2_Komp_AER)) {
+    return { active: false, reactor: 'unassigned' };
+  }
+
+  const assigned = ['R1', 'R2', 'R3', 'R4'].filter((reactor) => isTruthySignal(row[`V${reactor.slice(1)}_2_V_AER`]));
+  if (assigned.length === 1) {
+    return { active: true, reactor: assigned[0] as ReactorId };
+  }
+  if (assigned.length > 1) {
+    return { active: true, reactor: 'ambiguous' };
+  }
+  return { active: true, reactor: 'unassigned' };
+};

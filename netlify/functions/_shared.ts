@@ -26,7 +26,8 @@ export const ddb = new DynamoDBClient({
           accessKeyId: process.env.AWS_ACCESS_KEY_ID,
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
         }
-      : undefined
+      : undefined,
+  maxAttempts: 3
 });
 
 export const json = (statusCode: number, body: unknown, headers: Record<string, string> = {}) => ({

@@ -1,4 +1,5 @@
 [build]
+  # Keep the build aligned with Vite 7 on Netlify.
   command = "npm run build"
   publish = "dist"
   functions = "netlify/functions"

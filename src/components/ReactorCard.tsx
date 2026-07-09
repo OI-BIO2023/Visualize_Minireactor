@@ -1,7 +1,7 @@
 import type { ReactorId } from '../config/reactors';
 import { ReactorSchematic } from './ReactorSchematic';
 import type { QualityFlag } from '../lib/quality';
-import { formatBool, formatTemperatureValue, getReactorActuatorState } from '../lib/derived';
+import { formatBool, getReactorActuatorState } from '../lib/derived';
 
 type Props = {
   reactor: ReactorId;
@@ -18,6 +18,7 @@ export function ReactorCard({ reactor, data, flags }: Props) {
       <div className="panel-header">
         <div>
           <h2>{reactor}</h2>
+          <p className="muted">Reaktorspezifische Schaubilder und Aktorikstatus.</p>
         </div>
         <div className="badge-stack">
           <span className="status-badge">{flags.length ? `${flags.length} Hinweis(e)` : 'ok'}</span>
@@ -34,10 +35,10 @@ export function ReactorCard({ reactor, data, flags }: Props) {
         <div className="subpanel">
           <h3>Wärmeentzug</h3>
           <p>
-            VL/RL: <strong>{formatTemperatureValue(data?.[`T_VL_${reactor}`])} / {formatTemperatureValue(data?.[`T_RL_${reactor}`])}</strong>
+            Durchfluss: <strong>{value(data?.[`Q_VL_${reactor}`])} l/min</strong>
           </p>
           <p>
-            Durchfluss: <strong>{value(data?.[`Q_VL_${reactor}`])} l/min</strong>
+            Zustand: <strong>{state ? formatBool(state.heatExtraction) : 'inaktiv'}</strong>
           </p>
         </div>
         <div className="subpanel">

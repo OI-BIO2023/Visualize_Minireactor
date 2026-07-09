@@ -38,15 +38,25 @@ export function GlobalOverview({ data, lastTimestamp, flags }: Props) {
         </div>
       ) : null}
       <div className="metric-grid metric-grid-wide global-metric-grid">
-        {GLOBAL_TAGS.map((tag) => (
-          <article className="metric-card metric-card-global" key={tag.key}>
-            <span className="metric-label">{tag.label}</span>
-            <div className="metric-inline metric-inline-big">
-              <strong>{formatValue(data?.[tag.key], tag.key)}</strong>
-              {tag.unit ? <span className="metric-unit metric-unit-inline">{tag.unit}</span> : null}
-            </div>
-          </article>
-        ))}
+        {GLOBAL_TAGS.map((tag) => {
+          const value = data?.[tag.key];
+          const isBoolean = tag.kind === 'boolean';
+          return (
+            <article className={`metric-card metric-card-global${isBoolean ? ' metric-card-boolean' : ''}`} key={tag.key}>
+              <span className="metric-label">{tag.label}</span>
+              <div className={`metric-reading${isBoolean ? ' metric-reading-boolean' : ''}`}>
+                {isBoolean ? (
+                  <span className={`status-badge ${formatBool(value) === 'aktiv' ? 'success' : ''}`}>{formatBool(value)}</span>
+                ) : (
+                  <>
+                    <strong>{formatValue(value, tag.key)}</strong>
+                    {tag.unit ? <span className="metric-unit metric-unit-inline">{tag.unit}</span> : null}
+                  </>
+                )}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

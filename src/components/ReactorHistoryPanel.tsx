@@ -7,9 +7,11 @@ import {
   formatBool,
   getReactorActuatorState,
   heatExtractionPowerKw,
-  isTruthySignal
+  isTruthySignal,
+  normalizeTemperaturePoint
 } from '../lib/derived';
 import { normalizeNumeric } from '../lib/quality';
+import { formatDateTime } from '../lib/time';
 import { TimeSeriesChart } from './TimeSeriesChart';
 
 type Props = {
@@ -27,7 +29,12 @@ const actionColors = {
   freshWater: '#a78bfa'
 };
 
-const makePoints = (series: Record<string, unknown>[], key: string) => series.map((row) => ({ x: row.timestamp as string, y: normalizeNumeric(row[key]) }));
+const makePoints = (series: Record<string, unknown>[], key: string) =>
+  series.map((row) => ({
+    x: row.timestamp as string,
+    y: key.startsWith('T_') ? normalizeTemperaturePoint(row[key]) : normalizeNumeric(row[key])
+  }));
+
 const makeBinaryPoints = (series: Record<string, unknown>[], key: string) => series.map((row) => ({ x: row.timestamp as string, y: isTruthySignal(row[key]) ? 1 : 0 }));
 const formatSeriesLabel = (label: string) => label.replaceAll('_', ' ');
 
@@ -48,7 +55,11 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
   });
   const powerSeries = series.map((row) => ({
     x: row.timestamp as string,
-    y: heatExtractionPowerKw(normalizeNumeric(row[`Q_VL_${reactor}`]), normalizeNumeric(row[`T_RL_${reactor}`]), normalizeNumeric(row[`T_VL_${reactor}`]))
+    y: heatExtractionPowerKw(
+      normalizeNumeric(row[`Q_VL_${reactor}`]),
+      normalizeTemperaturePoint(row[`T_RL_${reactor}`]),
+      normalizeTemperaturePoint(row[`T_VL_${reactor}`])
+    )
   }));
   const timeseriesOptions: ChartOptions<'line'> = {
     scales: {
@@ -92,10 +103,7 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
       <div className="panel-header">
         <div>
           <h2>{reactor}</h2>
-          <p className="muted">
-            {series.length} Datenpunkte
-            {last?.timestamp ? ` · letzter Wert ${last.timestamp}` : ''}
-          </p>
+          <p className="muted">{series.length} Datenpunkte · letzter Datenpunkt {typeof last?.timestamp === 'string' ? formatDateTime(last.timestamp) : 'kein Wert'}</p>
         </div>
         <div className="chip-row">
           <span className="status-badge">Bewässerung {formatBool(latestState?.irrigation ?? false)}</span>
@@ -226,7 +234,7 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
               },
               {
                 label: 'Vorlauf',
-                data: series.map((row) => ({ x: row.timestamp as string, y: normalizeNumeric(row[`T_VL_${reactor}`]) })),
+                data: series.map((row) => ({ x: row.timestamp as string, y: normalizeTemperaturePoint(row[`T_VL_${reactor}`]) })),
                 borderColor: '#38bdf8',
                 borderWidth: 1,
                 pointRadius: 0,
@@ -234,7 +242,7 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
               },
               {
                 label: 'Rücklauf',
-                data: series.map((row) => ({ x: row.timestamp as string, y: normalizeNumeric(row[`T_RL_${reactor}`]) })),
+                data: series.map((row) => ({ x: row.timestamp as string, y: normalizeTemperaturePoint(row[`T_RL_${reactor}`]) })),
                 borderColor: '#22c55e',
                 borderWidth: 1,
                 pointRadius: 0,

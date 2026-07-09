@@ -20,18 +20,19 @@ const demoSeriesByReactor = {
 };
 
 const buildDemoHistory = () => {
+  const rawTemp = (value: number) => Math.round(value * 100);
   const frames = demoSeriesByReactor.R1.map((row, index) => ({
     ...row,
     ...demoSeriesByReactor.R2[index],
     ...demoSeriesByReactor.R3[index],
     ...demoSeriesByReactor.R4[index],
-    T_Speicher_oben: 61 + index / 10,
-    T_Speicher_unten: 53 + index / 12,
-    T_VL_global: 34 + index / 15,
-    T_FW: 17 + index / 20,
-    T_AER: 26 + index / 18,
-    T_Absaugung: 28 + index / 18,
-    T_Umgebung: 22 + index / 25,
+    T_Speicher_oben: rawTemp(61 + index / 10),
+    T_Speicher_unten: rawTemp(53 + index / 12),
+    T_VL_global: rawTemp(34 + index / 15),
+    T_FW: rawTemp(17 + index / 20),
+    T_AER: rawTemp(26 + index / 18),
+    T_Absaugung: rawTemp(28 + index / 18),
+    T_Umgebung: rawTemp(22 + index / 25),
     CO_Sonde: 110 + index,
     CO2_Sonde: 2100 + index * 8,
     O2_Sonde: 18.5 + index / 100,

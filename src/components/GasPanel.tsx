@@ -6,9 +6,13 @@ type Props = {
   assignedTo: string;
   timestamp: string | null;
   flags: QualityFlag[];
+  processState: {
+    active: boolean;
+    reactor: string;
+  };
 };
 
-export function GasPanel({ data, assignedTo, timestamp, flags }: Props) {
+export function GasPanel({ data, assignedTo, timestamp, flags, processState }: Props) {
   const items = ['CO_Sonde', 'CO2_Sonde', 'O2_Sonde', 'CH4_Sonde', 'F_Absaugung'] as const;
   const renderValue = (value: unknown) => {
     if (value == null) return '–';
@@ -27,6 +31,10 @@ export function GasPanel({ data, assignedTo, timestamp, flags }: Props) {
         <div>
           <p className="muted">Letzte gültige Gasprobe: {timestamp ?? 'kein Wert'}</p>
         </div>
+      </div>
+      <div className="chip-row">
+        <span className={`status-badge ${processState.active ? 'success' : 'warning'}`}>Prozess {processState.active ? 'aktiv' : 'inaktiv'}</span>
+        <span className="status-badge">Abgasanalyse: {processState.active ? processState.reactor : 'kein aktiver Reaktor'}</span>
       </div>
       <div className="metric-grid">
         {items.map((key) => (

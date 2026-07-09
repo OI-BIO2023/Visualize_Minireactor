@@ -2,7 +2,7 @@ import { QueryCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { config, ddb, json, normalizeRecord, parseQuery, validateIdent } from './_shared';
 
-const windows = [1, 24, 24 * 7];
+const windows = [1, 24, 24 * 7, 24 * 30];
 
 export const handler = async (event: { queryStringParameters?: Record<string, string | undefined> }) => {
   try {

@@ -6,6 +6,7 @@ type FieldSpec = {
   unit?: string;
   min?: number;
   max?: number;
+  kind?: 'number' | 'boolean';
 };
 
 const reactorFields = (suffix: ReactorId) => ({
@@ -33,11 +34,11 @@ const reactorFields = (suffix: ReactorId) => ({
     { key: `Q_VL_${suffix}`, label: 'Durchfluss', unit: 'l/min', min: 0, max: 100 }
   ] satisfies FieldSpec[],
   valves: [
-    { key: `P${suffix.slice(1)}_1_P_IRR`, label: 'Bewässerungspumpe' },
-    { key: `V${suffix.slice(1)}_1_V_VL`, label: 'Wärmeentzug' },
-    { key: `V${suffix.slice(1)}_3_V_AER`, label: 'Belüftung' },
-    { key: `V${suffix.slice(1)}_4_V_FW`, label: 'Frischwasser' },
-    { key: `V${suffix.slice(1)}_2_V_AER`, label: 'Abluft' }
+    { key: `P${suffix.slice(1)}_1_P_IRR`, label: 'Bewässerungspumpe', kind: 'boolean' },
+    { key: `V${suffix.slice(1)}_1_V_VL`, label: 'Wärmeentzug', kind: 'boolean' },
+    { key: `V${suffix.slice(1)}_3_V_AER`, label: 'Belüftung', kind: 'boolean' },
+    { key: `V${suffix.slice(1)}_4_V_FW`, label: 'Frischwasser', kind: 'boolean' },
+    { key: `V${suffix.slice(1)}_2_V_AER`, label: 'Abluft', kind: 'boolean' }
   ] satisfies FieldSpec[]
 });
 
@@ -54,13 +55,8 @@ export const GLOBAL_TAGS: FieldSpec[] = [
   { key: 'T_AER', label: 'Belüftungsluft', unit: '°C', min: -10, max: 90 },
   { key: 'T_Absaugung', label: 'Absaugung', unit: '°C', min: -10, max: 90 },
   { key: 'T_Umgebung', label: 'Umgebung', unit: '°C', min: -30, max: 60 },
-  { key: 'CO_Sonde', label: 'CO', unit: 'ppm', min: 0, max: 10000 },
-  { key: 'CO2_Sonde', label: 'CO2', unit: 'ppm', min: 0, max: 100000 },
-  { key: 'O2_Sonde', label: 'O2', unit: '%', min: 0, max: 25 },
-  { key: 'F_Absaugung', label: 'Absaugung', unit: 'l/min', min: 0, max: 1000 },
-  { key: 'CH4_Sonde', label: 'CH4', unit: 'ppm', min: 0, max: 100000 },
-  { key: 'C0_1_Komp_AER', label: 'Kompressor AER 1', unit: '%', min: 0, max: 100 },
-  { key: 'C0_2_Komp_AER', label: 'Kompressor AER 2', unit: '%', min: 0, max: 100 },
-  { key: 'P01_P02_Pn', label: 'Pumpenstatus', unit: '%', min: 0, max: 100 },
-  { key: 'Mischventil_V01', label: 'Mischventil', unit: '%', min: 0, max: 100 }
+  { key: 'C0_1_Komp_AER', label: 'Kompressor Belüftung', kind: 'boolean' },
+  { key: 'C0_2_Komp_AER', label: 'Kompressor Abluft', kind: 'boolean' },
+  { key: 'P01_P02_Pn', label: 'Pumpe', kind: 'boolean' },
+  { key: 'Mischventil_V01', label: 'Mischventil', kind: 'boolean' }
 ];

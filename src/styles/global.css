@@ -61,11 +61,17 @@ a {
   gap: 16px;
 }
 
-.brand-logo {
+.brand-mark {
   width: 120px;
   max-width: 40vw;
   object-fit: contain;
   filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.24));
+}
+
+.brand-mark svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .fallback-logo {

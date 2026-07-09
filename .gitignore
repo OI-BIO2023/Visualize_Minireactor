@@ -3,3 +3,4 @@ dist/
 vite-dev.out.log
 vite-dev.err.log
 .DS_Store
+site-archive.tar.gz

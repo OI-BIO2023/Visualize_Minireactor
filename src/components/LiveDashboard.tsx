@@ -13,7 +13,6 @@ export function LiveDashboard() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [logoFallback, setLogoFallback] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,18 +62,22 @@ export function LiveDashboard() {
     <main className="page">
       <header className="hero">
         <div className="brand-row">
-          {logoFallback ? (
-            <div className="brand-logo fallback-logo" aria-label="Biologik fallback logo">
-              <span>Biologik</span>
-            </div>
-          ) : (
-            <img
-              src="/logo_biologik.png"
-              alt="Biologik Logo"
-              className="brand-logo"
-              onError={() => setLogoFallback(true)}
-            />
-          )}
+          <div className="brand-mark" aria-label="Biologik logo">
+            <svg viewBox="0 0 240 64" role="img" aria-hidden="true">
+              <defs>
+                <linearGradient id="brand-grad" x1="0" x2="1">
+                  <stop offset="0%" stopColor="#1d4ed8" />
+                  <stop offset="100%" stopColor="#0f766e" />
+                </linearGradient>
+              </defs>
+              <rect width="240" height="64" rx="14" fill="#0b1220" />
+              <circle cx="34" cy="32" r="16" fill="url(#brand-grad)" />
+              <path d="M29 32c4-9 8-12 10-12 1 0 2 1 2 2 0 3-4 4-4 10 0 4 3 6 3 10 0 2-2 4-4 4-3 0-6-3-7-14Z" fill="#f8fafc" />
+              <text x="64" y="38" fill="#e2e8f0" fontFamily="Arial, sans-serif" fontSize="20" fontWeight="700">
+                Biologik
+              </text>
+            </svg>
+          </div>
           <div>
             <h1>Mini-Reaktoren Monitoring</h1>
             <p className="muted">Anlagen-ID: MI</p>

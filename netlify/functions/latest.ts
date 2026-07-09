@@ -2,7 +2,7 @@ import { QueryCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { config, ddb, json, normalizeRecord, parseQuery, validateIdent } from './_shared';
 
-const windows = [1, 24, 24 * 7];
+const windows = [1, 24, 24 * 7, 24 * 30];
 
 export const handler = async (event: { queryStringParameters?: Record<string, string | undefined> }) => {
   try {
@@ -35,15 +35,19 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
       if (items.length) {
         const item = items[0];
         const timestamp = typeof item.timestamp === 'string' ? item.timestamp : null;
-        return json(200, {
-          ok: true,
-          item,
-          timestamp,
-          flags: [],
-          source: `${hours}h`
-        }, {
-          'Cache-Control': `public, max-age=${Math.max(5, config.cacheTtlSeconds)}`
-        });
+        return json(
+          200,
+          {
+            ok: true,
+            item,
+            timestamp,
+            flags: [],
+            source: `${hours}h`
+          },
+          {
+            'Cache-Control': `public, max-age=${Math.max(5, config.cacheTtlSeconds)}`
+          }
+        );
       }
     }
 

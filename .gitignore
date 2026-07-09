@@ -1,0 +1,8 @@
+node_modules/
+dist/
+vite-dev.out.log
+vite-dev.err.log
+tunnel.out.log
+tunnel.err.log
+.DS_Store
+site-archive.tar.gz

@@ -20,9 +20,10 @@ type Props = {
   title: string;
   data: ChartData<'line', Array<{ x: string; y: number | null }>>;
   options?: ChartOptions<'line'>;
+  compact?: boolean;
 };
 
-export function TimeSeriesChart({ title, data, options }: Props) {
+export function TimeSeriesChart({ title, data, options, compact = false }: Props) {
   const mergedOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -51,7 +52,7 @@ export function TimeSeriesChart({ title, data, options }: Props) {
   } as ChartOptions<'line'>;
 
   return (
-    <section className="panel chart-panel">
+    <section className={`panel chart-panel ${compact ? 'chart-panel-compact' : ''}`}>
       <div className="panel-header">
         <h3>{title}</h3>
       </div>

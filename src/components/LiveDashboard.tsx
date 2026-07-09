@@ -13,6 +13,7 @@ export function LiveDashboard() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [logoFallback, setLogoFallback] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,16 +63,18 @@ export function LiveDashboard() {
     <main className="page">
       <header className="hero">
         <div className="brand-row">
-          <img
-            src="/logo_biologik.png"
-            alt="Biologik Logo"
-            className="brand-logo"
-            onError={(event) => {
-              const target = event.currentTarget;
-              target.onerror = null;
-              target.src = '/fallback-logo.svg';
-            }}
-          />
+          {logoFallback ? (
+            <div className="brand-logo fallback-logo" aria-label="Biologik fallback logo">
+              <span>Biologik</span>
+            </div>
+          ) : (
+            <img
+              src="/logo_biologik.png"
+              alt="Biologik Logo"
+              className="brand-logo"
+              onError={() => setLogoFallback(true)}
+            />
+          )}
           <div>
             <h1>Mini-Reaktoren Monitoring</h1>
             <p className="muted">Anlagen-ID: MI</p>

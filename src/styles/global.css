@@ -68,6 +68,18 @@ a {
   filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.24));
 }
 
+.fallback-logo {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.35), rgba(29, 78, 216, 0.35));
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .hero h1,
 .panel h2,
 .panel h3 {

@@ -1,11 +1,8 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const distDir = path.join(__dirname, 'dist');
+const distDir = path.join(process.cwd(), 'dist');
 
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',

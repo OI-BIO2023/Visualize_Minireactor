@@ -25,6 +25,20 @@ export const config = {
   cacheTtlSeconds: Number(envAny(['MY_CACHE_TTL_SECONDS', 'CACHE_TTL_SECONDS'], '30'))
 };
 
+export const alertConfig = {
+  enabled: envAny(['MY_STALE_ALERT_ENABLED', 'STALE_ALERT_ENABLED'], 'false') === 'true',
+  thresholdMinutes: Number(envAny(['MY_STALE_ALERT_THRESHOLD_MINUTES', 'STALE_ALERT_THRESHOLD_MINUTES'], '60')),
+  recipient: envAny(['MY_STALE_ALERT_RECIPIENT', 'STALE_ALERT_RECIPIENT'], 'oi@biologik.it'),
+  smtpHost: envAny(['MY_SMTP_HOST', 'SMTP_HOST'], 'smtp.gmail.com'),
+  smtpPort: Number(envAny(['MY_SMTP_PORT', 'SMTP_PORT'], '465')),
+  smtpSecure: envAny(['MY_SMTP_SECURE', 'SMTP_SECURE'], 'true') !== 'false',
+  smtpUser: envAny(['MY_SMTP_USER', 'SMTP_USER']),
+  smtpPass: envAny(['MY_SMTP_PASS', 'SMTP_PASS']),
+  smtpFrom: envAny(['MY_SMTP_FROM', 'SMTP_FROM']),
+  alertStatePkPrefix: envAny(['MY_ALERT_STATE_PK_PREFIX', 'ALERT_STATE_PK_PREFIX'], 'ALERT#'),
+  alertStateSk: envAny(['MY_ALERT_STATE_SK', 'ALERT_STATE_SK'], 'STALE#EMAIL')
+};
+
 export const ddb = new DynamoDBClient({
   region: envAny(['MY_AWS_REGION', 'AWS_REGION'], 'eu-central-1'),
   maxAttempts: 3,

@@ -47,7 +47,8 @@ a {
   padding: 20px 0 56px;
 }
 
-.hero {
+.hero,
+.hero-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -64,14 +65,15 @@ a {
 .brand-mark {
   width: 120px;
   max-width: 40vw;
-  object-fit: contain;
   filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.24));
 }
 
+.brand-mark img,
 .brand-mark svg {
   display: block;
   width: 100%;
   height: auto;
+  object-fit: contain;
 }
 
 .fallback-logo {
@@ -182,6 +184,16 @@ a {
   font-size: 0.82rem;
 }
 
+.metric-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.metric-unit-inline {
+  margin-left: 2px;
+}
+
 .reactor-card {
   display: grid;
   gap: 14px;
@@ -227,6 +239,14 @@ a {
   min-height: 420px;
 }
 
+.chart-panel-compact {
+  min-height: 260px;
+}
+
+.chart-panel-compact .chart-wrap {
+  min-height: 220px;
+}
+
 .chart-wrap {
   position: relative;
   min-height: 360px;
@@ -241,6 +261,19 @@ a {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
+}
+
+.selector-grid-wide {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.filter-button {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--text);
+  padding: 10px 14px;
+  cursor: pointer;
 }
 
 label {
@@ -258,6 +291,21 @@ input {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 14px;
   padding: 12px 14px;
+}
+
+.history-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.reactor-history-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.reactor-history-grid {
+  display: grid;
+  gap: 12px;
 }
 
 .page-nav,
@@ -306,7 +354,8 @@ input {
 }
 
 @media (max-width: 860px) {
-  .hero {
+  .hero,
+  .hero-top {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -323,7 +372,8 @@ input {
   }
 
   .panel,
-  .hero {
+  .hero,
+  .hero-top {
     border-radius: 18px;
   }
 

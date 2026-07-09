@@ -6,28 +6,35 @@ import { clampDateRange } from '../../src/lib/time';
 import type { Batch } from '../../src/lib/derived';
 
 const env = (key: string, fallback = '') => process.env[key] ?? fallback;
+const envAny = (keys: string[], fallback = '') => {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value != null && value !== '') return value;
+  }
+  return fallback;
+};
 
 export const config = {
-  tableName: env('DDB_TABLE'),
-  pkName: env('DDB_PK_NAME', 'pk'),
-  skName: env('DDB_SK_NAME', 'sk'),
-  identPrefix: env('DDB_IDENT_PREFIX', 'DEVICE#'),
-  tsPrefix: env('DDB_TS_PREFIX', 'TS#'),
-  allowedIdents: new Set(env('ALLOWED_IDENTS', 'MI').split(',').map((value) => value.trim()).filter(Boolean)),
-  maxQueryDays: Number(env('MAX_QUERY_DAYS', '90')),
-  cacheTtlSeconds: Number(env('CACHE_TTL_SECONDS', '30'))
+  tableName: envAny(['MY_DDB_TABLE', 'DDB_TABLE']),
+  pkName: envAny(['MY_DDB_PK_NAME', 'DDB_PK_NAME'], 'pk'),
+  skName: envAny(['MY_DDB_SK_NAME', 'DDB_SK_NAME'], 'sk'),
+  identPrefix: envAny(['MY_DDB_IDENT_PREFIX', 'DDB_IDENT_PREFIX'], 'DEVICE#'),
+  tsPrefix: envAny(['MY_DDB_TS_PREFIX', 'DDB_TS_PREFIX'], 'TS#'),
+  allowedIdents: new Set(envAny(['MY_ALLOWED_IDENTS', 'ALLOWED_IDENTS'], 'MI').split(',').map((value) => value.trim()).filter(Boolean)),
+  maxQueryDays: Number(envAny(['MY_MAX_QUERY_DAYS', 'MAX_QUERY_DAYS'], '90')),
+  cacheTtlSeconds: Number(envAny(['MY_CACHE_TTL_SECONDS', 'CACHE_TTL_SECONDS'], '30'))
 };
 
 export const ddb = new DynamoDBClient({
-  region: env('AWS_REGION', 'eu-central-1'),
+  region: envAny(['MY_AWS_REGION', 'AWS_REGION'], 'eu-central-1'),
+  maxAttempts: 3,
   credentials:
-    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+    envAny(['MY_AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID']) && envAny(['MY_AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY'])
       ? {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+          accessKeyId: envAny(['MY_AWS_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID']),
+          secretAccessKey: envAny(['MY_AWS_SECRET_ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY'])
         }
-      : undefined,
-  maxAttempts: 3
+      : undefined
 });
 
 export const json = (statusCode: number, body: unknown, headers: Record<string, string> = {}) => ({

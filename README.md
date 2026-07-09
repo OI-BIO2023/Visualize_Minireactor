@@ -24,14 +24,16 @@ npm run build
 
 ## Netlify env vars
 
-- `AWS_REGION`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `DDB_TABLE`
-- `DDB_PK_NAME`
-- `DDB_SK_NAME`
-- `DDB_IDENT_PREFIX`
-- `DDB_TS_PREFIX`
-- `ALLOWED_IDENTS`
-- `MAX_QUERY_DAYS`
-- `CACHE_TTL_SECONDS`
+- `MY_AWS_REGION`
+- `MY_AWS_ACCESS_KEY_ID`
+- `MY_AWS_SECRET_ACCESS_KEY`
+- `MY_DDB_TABLE`
+- `MY_DDB_PK_NAME`
+- `MY_DDB_SK_NAME`
+- `MY_DDB_IDENT_PREFIX`
+- `MY_DDB_TS_PREFIX`
+- `MY_ALLOWED_IDENTS`
+- `MY_MAX_QUERY_DAYS`
+- `MY_CACHE_TTL_SECONDS`
+
+Legacy fallback names are still supported during rollout, but the `MY_...` variants are preferred.

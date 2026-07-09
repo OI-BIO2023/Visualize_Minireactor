@@ -15,6 +15,55 @@ export type Batch = {
 
 export type ReactorGasAssignment = ReactorId | 'unassigned' | 'ambiguous';
 
+export const TEMPERATURE_KEYS = new Set([
+  'T_VL_global',
+  'T_Speicher_oben',
+  'T_Speicher_unten',
+  'T_FW',
+  'T_AER',
+  'T_Absaugung',
+  'T_Umgebung',
+  'T_RL_R1',
+  'T_Innenraum_R1',
+  'T_oben_L_R1',
+  'T_oben_R_R1',
+  'T_unter_L_R1',
+  'T_unter_R_R1',
+  'T_Mittel_R1',
+  'T_RL_R2',
+  'T_Innenraum_R2',
+  'T_oben_L_R2',
+  'T_oben_R_R2',
+  'T_unter_L_R2',
+  'T_unter_R_R2',
+  'T_Mittel_R2',
+  'T_RL_R3',
+  'T_Innenraum_R3',
+  'T_oben_L_R3',
+  'T_oben_R_R3',
+  'T_unter_L_R3',
+  'T_unter_R_R3',
+  'T_Mittel_R3',
+  'T_RL_R4',
+  'T_Innenraum_R4',
+  'T_oben_L_R4',
+  'T_oben_R_R4',
+  'T_unter_L_R4',
+  'T_unter_R_R4',
+  'T_Mittel_R4'
+]);
+
+export const formatTemperatureValue = (value: unknown): string => {
+  const numeric = normalizeNumeric(value);
+  if (numeric == null) return '–';
+  return `${(numeric / 100).toFixed(1)} °C`;
+};
+
+export const normalizeTemperaturePoint = (value: unknown): number | null => {
+  const numeric = normalizeNumeric(value);
+  return numeric == null ? null : numeric / 100;
+};
+
 export const average = (values: Array<number | null | undefined>): number | null => {
   const valid = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
   if (!valid.length) return null;
@@ -23,17 +72,17 @@ export const average = (values: Array<number | null | undefined>): number | null
 
 export const biomassAverageTemperature = (row: DataPoint, reactor: ReactorId): number | null => {
   return average([
-    normalizeNumeric(row[`T_oben_L_${reactor}`]),
-    normalizeNumeric(row[`T_oben_R_${reactor}`]),
-    normalizeNumeric(row[`T_unter_L_${reactor}`]),
-    normalizeNumeric(row[`T_unter_R_${reactor}`]),
-    normalizeNumeric(row[`T_Mittel_${reactor}`])
+    normalizeTemperaturePoint(row[`T_oben_L_${reactor}`]),
+    normalizeTemperaturePoint(row[`T_oben_R_${reactor}`]),
+    normalizeTemperaturePoint(row[`T_unter_L_${reactor}`]),
+    normalizeTemperaturePoint(row[`T_unter_R_${reactor}`]),
+    normalizeTemperaturePoint(row[`T_Mittel_${reactor}`])
   ]);
 };
 
 export const temperatureGradient = (row: DataPoint, reactor: ReactorId): number | null => {
-  const top = average([normalizeNumeric(row[`T_oben_L_${reactor}`]), normalizeNumeric(row[`T_oben_R_${reactor}`])]);
-  const bottom = average([normalizeNumeric(row[`T_unter_L_${reactor}`]), normalizeNumeric(row[`T_unter_R_${reactor}`])]);
+  const top = average([normalizeTemperaturePoint(row[`T_oben_L_${reactor}`]), normalizeTemperaturePoint(row[`T_oben_R_${reactor}`])]);
+  const bottom = average([normalizeTemperaturePoint(row[`T_unter_L_${reactor}`]), normalizeTemperaturePoint(row[`T_unter_R_${reactor}`])]);
   if (top == null || bottom == null) return null;
   return top - bottom;
 };

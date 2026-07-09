@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { getLatest } from '../lib/api';
 import { demoLatest } from '../lib/mock';
 import { assignGasReactor, getExhaustAnalysisState } from '../lib/derived';
-import { formatDateTime } from '../lib/time';
 import { GlobalOverview } from './GlobalOverview';
 import { ReactorCard } from './ReactorCard';
 import { GasPanel } from './GasPanel';
@@ -74,16 +73,11 @@ export function LiveDashboard() {
           </div>
           <div>
             <h1>Mini-Reaktoren Monitoring</h1>
-            <p className="muted">Anlagen-ID: MI</p>
           </div>
         </div>
-        <div className="hero-meta">
-          <a href="/history" className="back-link">
-            Historie öffnen
-          </a>
-          <span className="status-badge success">Online ohne Login</span>
-          <span className="status-badge">{formatDateTime(timestamp)}</span>
-        </div>
+        <a href="/history" className="back-link hero-history-link">
+          Historie öffnen
+        </a>
       </header>
       {qualityFlags.length ? (
         <div className="chip-row">
@@ -96,7 +90,7 @@ export function LiveDashboard() {
       <GlobalOverview data={data} lastTimestamp={timestamp} flags={qualityFlags} />
       <div className="reactor-tabs">
         {(['R1', 'R2', 'R3', 'R4'] as const).map((reactor) => (
-          <ReactorCard key={reactor} reactor={reactor} data={data} flags={[]} activeGas={gasAssignment} />
+          <ReactorCard key={reactor} reactor={reactor} data={data} flags={[]} />
         ))}
       </div>
       <GasPanel data={data} assignedTo={String(gasAssignment)} timestamp={timestamp} flags={qualityFlags} processState={{ active: exhaustState.active, reactor: String(exhaustState.reactor) }} />

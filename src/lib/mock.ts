@@ -3,23 +3,25 @@ import { biomassAverageTemperature, heatExtractionPowerKw, type Batch } from './
 
 export const demoTimestamp = new Date('2026-07-09T10:00:00+02:00').toISOString();
 
+const rawTemp = (value: number) => Math.round(value * 100);
+
 const reactorValue = (reactor: ReactorId, offset: number) => {
   const base = REACTORS.indexOf(reactor) + 1 + offset;
   return {
-    [`T_oben_L_${reactor}`]: 58 + base,
-    [`T_oben_R_${reactor}`]: 57 + base,
-    [`T_unter_L_${reactor}`]: 49 + base,
-    [`T_unter_R_${reactor}`]: 48 + base,
-    [`T_Mittel_${reactor}`]: 53 + base,
-    [`T_Innenraum_${reactor}`]: 41 + base / 2,
+    [`T_oben_L_${reactor}`]: rawTemp(58 + base),
+    [`T_oben_R_${reactor}`]: rawTemp(57 + base),
+    [`T_unter_L_${reactor}`]: rawTemp(49 + base),
+    [`T_unter_R_${reactor}`]: rawTemp(48 + base),
+    [`T_Mittel_${reactor}`]: rawTemp(53 + base),
+    [`T_Innenraum_${reactor}`]: rawTemp(41 + base / 2),
     [`HUM_oben_${reactor}`]: 68 - base,
     [`HUM_unten_${reactor}`]: 63 - base,
     [`Q_IRR_${reactor}`]: base % 2 === 0 ? 1.2 : 0,
-    [`T_IRR_${reactor}`]: 19 + base / 4,
+    [`T_IRR_${reactor}`]: rawTemp(19 + base / 4),
     [`Vol_watering_${reactor}`]: 140 + base * 6,
     [`Vol_watering_${reactor}_fw`]: 55 + base * 2,
-    [`T_RL_${reactor}`]: 33 + base / 10,
-    [`T_VL_${reactor}`]: 29 + base / 10,
+    [`T_RL_${reactor}`]: rawTemp(33 + base / 10),
+    [`T_VL_${reactor}`]: rawTemp(29 + base / 10),
     [`Q_VL_${reactor}`]: 3.4 + base / 10,
     [`P${reactor.slice(1)}_1_P_IRR`]: base % 2 === 0 ? 1 : 0,
     [`V${reactor.slice(1)}_1_V_VL`]: 1,
@@ -31,13 +33,13 @@ const reactorValue = (reactor: ReactorId, offset: number) => {
 
 export const demoLatest = {
   timestamp: demoTimestamp,
-  T_Speicher_oben: 61.2,
-  T_Speicher_unten: 52.8,
-  T_VL_global: 34.5,
-  T_FW: 17.6,
-  T_AER: 26.2,
-  T_Absaugung: 28.1,
-  T_Umgebung: 22.4,
+  T_Speicher_oben: rawTemp(61.2),
+  T_Speicher_unten: rawTemp(52.8),
+  T_VL_global: rawTemp(34.5),
+  T_FW: rawTemp(17.6),
+  T_AER: rawTemp(26.2),
+  T_Absaugung: rawTemp(28.1),
+  T_Umgebung: rawTemp(22.4),
   CO_Sonde: 113,
   CO2_Sonde: 2120,
   O2_Sonde: 18.9,
@@ -89,26 +91,26 @@ export const demoHistorySeries = (reactor: ReactorId) =>
     const timestamp = new Date(Date.parse(demoTimestamp) - (47 - index) * 60 * 60 * 1000).toISOString();
     const temp = biomassAverageTemperature(
       {
-        [`T_oben_L_${reactor}`]: 50 + index / 4,
-        [`T_oben_R_${reactor}`]: 49 + index / 4,
-        [`T_unter_L_${reactor}`]: 44 + index / 6,
-        [`T_unter_R_${reactor}`]: 43 + index / 6,
-        [`T_Mittel_${reactor}`]: 47 + index / 5
+        [`T_oben_L_${reactor}`]: rawTemp(50 + index / 4),
+        [`T_oben_R_${reactor}`]: rawTemp(49 + index / 4),
+        [`T_unter_L_${reactor}`]: rawTemp(44 + index / 6),
+        [`T_unter_R_${reactor}`]: rawTemp(43 + index / 6),
+        [`T_Mittel_${reactor}`]: rawTemp(47 + index / 5)
       },
       reactor
     );
     return {
       timestamp,
-      [`T_Mittel_${reactor}`]: temp,
-      [`T_oben_L_${reactor}`]: 50 + index / 4,
-      [`T_oben_R_${reactor}`]: 49 + index / 4,
-      [`T_unter_L_${reactor}`]: 44 + index / 6,
-      [`T_unter_R_${reactor}`]: 43 + index / 6,
+      [`T_Mittel_${reactor}`]: rawTemp(temp ?? 0),
+      [`T_oben_L_${reactor}`]: rawTemp(50 + index / 4),
+      [`T_oben_R_${reactor}`]: rawTemp(49 + index / 4),
+      [`T_unter_L_${reactor}`]: rawTemp(44 + index / 6),
+      [`T_unter_R_${reactor}`]: rawTemp(43 + index / 6),
       [`HUM_oben_${reactor}`]: 72 - index / 8,
       [`HUM_unten_${reactor}`]: 67 - index / 10,
       [`Q_VL_${reactor}`]: 3 + index / 30,
-      [`T_RL_${reactor}`]: 33 + index / 20,
-      [`T_VL_${reactor}`]: 29 + index / 20,
+      [`T_RL_${reactor}`]: rawTemp(33 + index / 20),
+      [`T_VL_${reactor}`]: rawTemp(29 + index / 20),
       [`Q_IRR_${reactor}`]: index % 8 < 2 ? 1.1 : 0,
       [`Vol_watering_${reactor}`]: 100 + index * 2,
       [`Vol_watering_${reactor}_fw`]: 40 + index,
@@ -122,5 +124,5 @@ export const demoHistorySeries = (reactor: ReactorId) =>
 export const demoHeatExtractionKw = (reactor: ReactorId) =>
   demoHistorySeries(reactor).map((row) => ({
     timestamp: row.timestamp,
-    powerKw: heatExtractionPowerKw(row[`Q_VL_${reactor}`] as number, row[`T_RL_${reactor}`] as number, row[`T_VL_${reactor}`] as number)
+    powerKw: heatExtractionPowerKw(row[`Q_VL_${reactor}`] as number, (row[`T_RL_${reactor}`] as number) / 100, (row[`T_VL_${reactor}`] as number) / 100)
   }));

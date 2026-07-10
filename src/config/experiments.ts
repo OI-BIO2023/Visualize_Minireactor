@@ -18,6 +18,8 @@ export type ExperimentSeries = {
   };
 };
 
+// Single source of truth for experiment metadata.
+// Keep the structure stable so each series can be referenced unambiguously by id.
 export const EXPERIMENT_SERIES: ExperimentSeries[] = [
   {
     id: 'MI-2026-SUMMER',

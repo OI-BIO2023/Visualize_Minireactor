@@ -7,14 +7,13 @@ import { ReactorCard } from './ReactorCard';
 import { GasPanel } from './GasPanel';
 import { QualityBadge } from './QualityBadge';
 import type { QualityFlag } from '../lib/quality';
+import logoSrc from '../assets/logo_biologik.png';
 
 export function LiveDashboard() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
-  const logoSrc = '/logo_biologik.png?v=20260710-2';
-
   useEffect(() => {
     let cancelled = false;
 

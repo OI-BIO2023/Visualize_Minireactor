@@ -37,7 +37,6 @@ export function GlobalOverview({ data, lastTimestamp, flags }: Props) {
           ))}
         </div>
       ) : null}
-
       <div className="section-stack">
         <div>
           <h3 className="section-title">Temperaturen</h3>
@@ -53,7 +52,6 @@ export function GlobalOverview({ data, lastTimestamp, flags }: Props) {
             ))}
           </div>
         </div>
-
         <div>
           <h3 className="section-title">Anlagenstatus</h3>
           <div className="metric-grid metric-grid-wide global-metric-grid">

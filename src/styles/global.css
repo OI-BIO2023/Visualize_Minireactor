@@ -218,11 +218,11 @@ a {
 }
 
 .metric-inline-big .metric-unit-inline {
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(44, 168, 157, 0.14);
-  color: #d4fff9;
-  border: 1px solid rgba(44, 168, 157, 0.18);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
 }
 
 .metric-inline {

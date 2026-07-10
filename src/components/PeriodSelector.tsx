@@ -31,10 +31,7 @@ export function PeriodSelector({ range, availableRange, onChange }: Props) {
   return (
     <section className="panel">
       <div className="panel-header">
-        <div>
-          <h2>Zeitraum wählen</h2>
-          <p className="muted">Die Historie ist für alle Reaktoren gemeinsam und nicht mehr batchgebunden.</p>
-        </div>
+        <h2>Zeitraum wählen</h2>
       </div>
       <div className="selector-grid selector-grid-wide">
         <label>

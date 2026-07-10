@@ -24,10 +24,7 @@ export function GlobalHistoryPanel({ series }: Props) {
   return (
     <section className="panel">
       <div className="panel-header">
-        <div>
-          <h2>Globale Zeitreihen</h2>
-          <p className="muted">Temperaturen der Gesamtanlage, getrennt von den Reaktoren.</p>
-        </div>
+        <h2>Globale Zeitreihen</h2>
       </div>
       <TimeSeriesChart compact title="Globale Temperaturen" data={{ datasets }} />
     </section>

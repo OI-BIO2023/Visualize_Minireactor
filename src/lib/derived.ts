@@ -53,16 +53,19 @@ export const TEMPERATURE_KEYS = new Set([
   'T_Mittel_R4'
 ]);
 
-export const formatTemperatureValue = (value: unknown): string => {
+const normalizeTemperatureNumber = (value: unknown): number | null => {
   const numeric = normalizeNumeric(value);
-  if (numeric == null) return '–';
-  return `${(numeric / 100).toFixed(1)} °C`;
+  if (numeric == null) return null;
+  return Math.abs(numeric) >= 1000 ? numeric / 100 : numeric;
 };
 
-export const normalizeTemperaturePoint = (value: unknown): number | null => {
-  const numeric = normalizeNumeric(value);
-  return numeric == null ? null : numeric / 100;
+export const formatTemperatureValue = (value: unknown): string => {
+  const numeric = normalizeTemperatureNumber(value);
+  if (numeric == null) return '–';
+  return `${numeric.toFixed(1)} °C`;
 };
+
+export const normalizeTemperaturePoint = (value: unknown): number | null => normalizeTemperatureNumber(value);
 
 export const average = (values: Array<number | null | undefined>): number | null => {
   const valid = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value));

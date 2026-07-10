@@ -1,3 +1,5 @@
+import { GAS_TEMPERATURE_TAGS } from '../config/tags';
+import { formatTemperatureValue } from '../lib/derived';
 import type { QualityFlag } from '../lib/quality';
 import { QualityBadge } from './QualityBadge';
 import { formatDateTime } from '../lib/time';
@@ -12,14 +14,15 @@ type Props = {
   };
 };
 
+const renderValue = (value: unknown) => {
+  if (value == null) return '–';
+  if (typeof value === 'number') return value.toFixed(1);
+  if (typeof value === 'boolean') return value ? '1' : '0';
+  return String(value);
+};
+
 export function GasPanel({ data, timestamp, flags, processState }: Props) {
-  const items = ['CO_Sonde', 'CO2_Sonde', 'O2_Sonde', 'CH4_Sonde', 'F_Absaugung'] as const;
-  const renderValue = (value: unknown) => {
-    if (value == null) return '–';
-    if (typeof value === 'number') return value.toFixed(1);
-    if (typeof value === 'boolean') return value ? '1' : '0';
-    return String(value);
-  };
+  const gasItems = ['CO_Sonde', 'CO2_Sonde', 'O2_Sonde', 'CH4_Sonde', 'F_Absaugung'] as const;
 
   return (
     <section className="panel">
@@ -34,7 +37,13 @@ export function GasPanel({ data, timestamp, flags, processState }: Props) {
         </div>
       </div>
       <div className="metric-grid gas-metric-grid">
-        {items.map((key) => (
+        {GAS_TEMPERATURE_TAGS.map((tag) => (
+          <article key={tag.key} className="metric-card metric-card-gas">
+            <span className="metric-label">{tag.label}</span>
+            <strong>{formatTemperatureValue(data?.[tag.key])}</strong>
+          </article>
+        ))}
+        {gasItems.map((key) => (
           <article key={key} className="metric-card metric-card-gas">
             <span className="metric-label">{key.replace('_Sonde', '')}</span>
             <strong>{renderValue(data?.[key])}</strong>

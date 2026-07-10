@@ -3,8 +3,8 @@ import { getBatches, getData, getLatest } from '../lib/api';
 import { demoBatches, demoHistorySeries, demoLatest } from '../lib/mock';
 import { type Batch } from '../lib/derived';
 import { PeriodSelector } from './PeriodSelector';
+import { GlobalHistoryPanel } from './GlobalHistoryPanel';
 import { ReactorHistoryPanel } from './ReactorHistoryPanel';
-import { formatDateTime } from '../lib/time';
 import { REACTORS } from '../config/reactors';
 
 const defaultRange = {
@@ -21,7 +21,7 @@ const demoSeriesByReactor = {
 
 const buildDemoHistory = () => {
   const rawTemp = (value: number) => Math.round(value * 100);
-  const frames = demoSeriesByReactor.R1.map((row, index) => ({
+  return demoSeriesByReactor.R1.map((row, index) => ({
     ...row,
     ...demoSeriesByReactor.R2[index],
     ...demoSeriesByReactor.R3[index],
@@ -42,7 +42,6 @@ const buildDemoHistory = () => {
     P01_P02_Pn: 1,
     Mischventil_V01: 54
   }));
-  return frames;
 };
 
 const mergeLatestPoint = (series: Record<string, unknown>[], latest: Record<string, unknown> | null) => {
@@ -123,6 +122,8 @@ export function HistoryDashboard() {
     };
   }, [range]);
 
+  const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
+
   return (
     <main className="page">
       <header className="hero hero-top">
@@ -135,14 +136,10 @@ export function HistoryDashboard() {
         </a>
       </header>
       <PeriodSelector range={range} availableRange={availableRange} onChange={setRange} />
-      <section className="panel">
-        <p className="muted">
-          Zeitraum: {formatDateTime(range.start)} bis {formatDateTime(range.end)}
-        </p>
-      </section>
+      <GlobalHistoryPanel series={filteredSeries} />
       <div className="history-grid">
         {REACTORS.map((reactor) => (
-          <ReactorHistoryPanel key={reactor} reactor={reactor} series={series.filter((row) => isValidTimestamp(row.timestamp))} />
+          <ReactorHistoryPanel key={reactor} reactor={reactor} series={filteredSeries} />
         ))}
       </div>
     </main>

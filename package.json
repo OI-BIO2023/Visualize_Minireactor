@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/fetch-logo.mjs",
     "build": "vite build && tsc -p tsconfig.node.json",
     "preview": "vite preview",
     "test": "vitest run",

@@ -51,7 +51,7 @@ const mergeLatestPoint = (series: Record<string, unknown>[], latest: Record<stri
 
 const isValidTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
 
-const csvExcludedKeys = new Set(['expiresAt', 'ident', 'payload', 'pk', 'sk', 'type']);
+const csvExcludedKeys = new Set(['expiresAt', 'ident', 'payload', 'pk', 'sk', 'ts', 'type']);
 
 const sanitizeCsvRows = (rows: Record<string, unknown>[]) =>
   rows.map((row) =>
@@ -138,11 +138,11 @@ export function HistoryDashboard() {
           <h1>Historie</h1>
         </div>
         <div className="chip-row">
-          <button type="button" className="filter-button" onClick={() => void downloadCsv('value')}>
-            CSV Wertdaten
+          <button type="button" className="filter-button filter-button-value" onClick={() => void downloadCsv('value')}>
+            CSV Value
           </button>
-          <button type="button" className="filter-button" onClick={() => void downloadCsv('event')}>
-            CSV Ereignisse
+          <button type="button" className="filter-button filter-button-event" onClick={() => void downloadCsv('event')}>
+            CSV Event
           </button>
           <a href="/" className="back-link">
             Zur Live-Ansicht

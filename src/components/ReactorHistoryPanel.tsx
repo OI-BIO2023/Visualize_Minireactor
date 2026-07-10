@@ -75,6 +75,12 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
 
   const timeseriesOptions: ChartOptions<'line'> = {
     scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Datum / Uhrzeit'
+        }
+      },
       y: {
         beginAtZero: false
       }
@@ -83,6 +89,12 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
 
   const powerOptions: ChartOptions<'line'> = {
     scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Datum / Uhrzeit'
+        }
+      },
       y: {
         position: 'left',
         title: {
@@ -297,6 +309,12 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
           options={{
             ...timeseriesOptions,
             scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Datum / Uhrzeit'
+                }
+              },
               y: {
                 beginAtZero: false,
                 title: {

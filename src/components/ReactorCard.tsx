@@ -13,6 +13,7 @@ const value = (entry: unknown) => (typeof entry === 'number' ? entry.toFixed(ent
 
 export function ReactorCard({ reactor, data, flags }: Props) {
   const state = data ? getReactorActuatorState(data, reactor) : null;
+
   return (
     <article className="panel reactor-card">
       <div className="panel-header">

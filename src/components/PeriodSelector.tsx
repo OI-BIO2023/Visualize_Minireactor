@@ -23,7 +23,6 @@ export function PeriodSelector({ experiments, selectedExperimentId, onSelectExpe
       <div className="panel-header">
         <div>
           <h2>Versuchsreihe wählen</h2>
-          {selected ? <p className="muted">{selected.description}</p> : null}
         </div>
       </div>
       <div className="selector-grid selector-grid-wide">

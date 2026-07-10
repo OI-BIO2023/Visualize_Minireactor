@@ -1,7 +1,7 @@
 import type { ReactorId } from '../config/reactors';
 import { ReactorSchematic } from './ReactorSchematic';
 import type { QualityFlag } from '../lib/quality';
-import { formatBool, getReactorActuatorState } from '../lib/derived';
+import { formatBool, formatTemperatureValue, getReactorActuatorState } from '../lib/derived';
 
 type Props = {
   reactor: ReactorId;
@@ -18,7 +18,7 @@ export function ReactorCard({ reactor, data, flags }: Props) {
       <div className="panel-header">
         <div>
           <h2>{reactor}</h2>
-          <p className="muted">Reaktorspezifische Schaubilder und Aktorikstatus.</p>
+          <p className="muted">Live-Messwerte, Aktorik und Wärmeströme pro Reaktor.</p>
         </div>
         <div className="badge-stack">
           <span className="status-badge">{flags.length ? `${flags.length} Hinweis(e)` : 'ok'}</span>
@@ -35,6 +35,12 @@ export function ReactorCard({ reactor, data, flags }: Props) {
         <div className="subpanel">
           <h3>Wärmeentzug</h3>
           <p>
+            Vorlauf: <strong>{formatTemperatureValue(data?.[`T_VL_${reactor}`])}</strong>
+          </p>
+          <p>
+            Rücklauf: <strong>{formatTemperatureValue(data?.[`T_RL_${reactor}`])}</strong>
+          </p>
+          <p>
             Durchfluss: <strong>{value(data?.[`Q_VL_${reactor}`])} l/min</strong>
           </p>
           <p>
@@ -44,10 +50,16 @@ export function ReactorCard({ reactor, data, flags }: Props) {
         <div className="subpanel">
           <h3>Bewässerung</h3>
           <p>
+            Temperatur: <strong>{formatTemperatureValue(data?.[`T_IRR_${reactor}`])}</strong>
+          </p>
+          <p>
             Q_IRR: <strong>{value(data?.[`Q_IRR_${reactor}`])} l/min</strong>
           </p>
           <p>
-            Volumen: <strong>{value(data?.[`Vol_watering_${reactor}`])} l</strong>
+            Gesamtvolumen Bewässerung: <strong>{value(data?.[`Vol_watering_${reactor}`])} l</strong>
+          </p>
+          <p>
+            Frischwasser gesamt: <strong>{value(data?.[`Vol_watering_${reactor}_fw`])} l</strong>
           </p>
         </div>
         <div className="subpanel">

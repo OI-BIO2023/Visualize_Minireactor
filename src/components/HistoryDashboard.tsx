@@ -56,6 +56,25 @@ const mergeLatestPoint = (series: Record<string, unknown>[], latest: Record<stri
 
 const isValidTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
 
+const toCsv = (rows: Record<string, unknown>[]) => {
+  if (!rows.length) return '';
+  const headers = Array.from(new Set(['timestamp', ...rows.flatMap((row) => Object.keys(row))])).sort((a, b) => {
+    if (a === 'timestamp') return -1;
+    if (b === 'timestamp') return 1;
+    return a.localeCompare(b);
+  });
+  const escapeCell = (value: unknown) => {
+    if (value == null) return '';
+    const text = typeof value === 'string' ? value : typeof value === 'number' || typeof value === 'boolean' ? String(value) : JSON.stringify(value);
+    return `"${text.replaceAll('"', '""')}"`;
+  };
+  const lines = [headers.join(';')];
+  for (const row of rows) {
+    lines.push(headers.map((header) => escapeCell(row[header])).join(';'));
+  }
+  return `\uFEFF${lines.join('\n')}`;
+};
+
 export function HistoryDashboard() {
   const [batches, setBatches] = useState<Batch[]>(demoBatches);
   const [range, setRange] = useState(defaultRange);
@@ -123,17 +142,32 @@ export function HistoryDashboard() {
   }, [range]);
 
   const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
+  const downloadCsv = () => {
+    const blob = new Blob([toCsv(filteredSeries)], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `minireactor-historie-${range.start.slice(0, 10)}_${range.end.slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <main className="page">
       <header className="hero hero-top">
         <div>
           <h1>Historie</h1>
-          <p className="muted">Alle Reaktoren in einem gemeinsamen Zeitfenster.</p>
         </div>
-        <a href="/" className="back-link">
-          Zur Live-Ansicht
-        </a>
+        <div className="chip-row">
+          <button type="button" className="filter-button" onClick={downloadCsv}>
+            CSV herunterladen
+          </button>
+          <a href="/" className="back-link">
+            Zur Live-Ansicht
+          </a>
+        </div>
       </header>
       <PeriodSelector range={range} availableRange={availableRange} onChange={setRange} />
       <GlobalHistoryPanel series={filteredSeries} />

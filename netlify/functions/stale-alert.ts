@@ -9,6 +9,10 @@ export const config = {
   schedule: '@hourly'
 };
 
+const ALERT_ENABLED = true;
+const ALERT_RECIPIENT = 'oi@biologik.it';
+const ALERT_THRESHOLD_MINUTES = 60;
+
 const buildStateKey = (ident: string) => ({
   [sharedConfig.pkName]: { S: `${alertConfig.alertStatePkPrefix}${ident}` },
   [sharedConfig.skName]: { S: alertConfig.alertStateSk }
@@ -34,7 +38,7 @@ export const handler = async () => {
       return json(500, { ok: false, sent: false, message: 'DDB_TABLE is not configured' });
     }
 
-    if (!alertConfig.enabled) {
+    if (!ALERT_ENABLED) {
       return json(200, { ok: true, sent: false, skipped: true, message: 'Stale alerting is disabled' });
     }
 
@@ -44,11 +48,11 @@ export const handler = async () => {
       return json(200, { ok: true, sent: false, message: 'No latest record available' });
     }
 
-    if (!isStale(latest.timestamp, alertConfig.thresholdMinutes)) {
+    if (!isStale(latest.timestamp, ALERT_THRESHOLD_MINUTES)) {
       return json(200, { ok: true, sent: false, stale: false, timestamp: latest.timestamp });
     }
 
-    if (!alertConfig.smtpUser || !alertConfig.smtpPass || !alertConfig.recipient) {
+    if (!alertConfig.smtpUser || !alertConfig.smtpPass) {
       return json(500, { ok: false, sent: false, message: 'SMTP alert configuration is incomplete' });
     }
 
@@ -76,9 +80,9 @@ export const handler = async () => {
     const fromAddress = alertConfig.smtpFrom || alertConfig.smtpUser;
     await transporter.sendMail({
       from: fromAddress,
-      to: alertConfig.recipient,
+      to: ALERT_RECIPIENT,
       subject: `[MiniReactor] Datenstopp ${ident}`,
-      text: buildEmailBody(ident, latest.timestamp, alertConfig.thresholdMinutes)
+      text: buildEmailBody(ident, latest.timestamp, ALERT_THRESHOLD_MINUTES)
     });
 
     await ddb.send(
@@ -89,7 +93,7 @@ export const handler = async () => {
           ident: { S: ident },
           lastAlertedTimestamp: { S: latest.timestamp },
           lastAlertedAt: { S: new Date().toISOString() },
-          thresholdMinutes: { N: String(alertConfig.thresholdMinutes) }
+          thresholdMinutes: { N: String(ALERT_THRESHOLD_MINUTES) }
         }
       })
     );

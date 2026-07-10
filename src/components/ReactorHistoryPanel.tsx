@@ -4,8 +4,6 @@ import type { ReactorId } from '../config/reactors';
 import {
   average,
   biomassAverageTemperature,
-  formatBool,
-  getReactorActuatorState,
   heatExtractionPowerKw,
   isTruthySignal,
   normalizeTemperaturePoint
@@ -19,7 +17,7 @@ type Props = {
   series: Record<string, unknown>[];
 };
 
-const sensorColors = ['#7dd3fc', '#38bdf8', '#22c55e', '#86efac', '#f59e0b', '#a78bfa'];
+const sensorColors = ['#7dd3fc', '#38bdf8', '#22c55e', '#86efac', '#f59e0b', '#a78bfa', '#94a3b8', '#c084fc'];
 const humidityColors = ['#38bdf8', '#0ea5e9'];
 const actionColors = {
   irrigation: '#22c55e',
@@ -40,10 +38,7 @@ const formatSeriesLabel = (label: string) => label.replaceAll('_', ' ');
 
 export function ReactorHistoryPanel({ reactor, series }: Props) {
   const tags = REACTOR_TAGS[reactor];
-  const stateSeries = series.map((row) => getReactorActuatorState(row, reactor));
-  const latestState = stateSeries.at(-1);
   const last = series.at(-1);
-  const temperatureSensors = tags.temperature.slice(0, 5);
   const temperatureAverage = series.map((row) => ({
     x: row.timestamp as string,
     y: biomassAverageTemperature(row, reactor)
@@ -53,6 +48,22 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
     const lower = normalizeNumeric(row[`HUM_unten_${reactor}`]);
     return { x: row.timestamp as string, y: average([upper, lower]) };
   });
+  const irrigationTemperature = series.map((row) => ({
+    x: row.timestamp as string,
+    y: normalizeTemperaturePoint(row[`T_IRR_${reactor}`])
+  }));
+  const irrigationFlow = series.map((row) => ({
+    x: row.timestamp as string,
+    y: normalizeNumeric(row[`Q_IRR_${reactor}`])
+  }));
+  const irrigationVolume = series.map((row) => ({
+    x: row.timestamp as string,
+    y: normalizeNumeric(row[`Vol_watering_${reactor}`])
+  }));
+  const freshWaterVolume = series.map((row) => ({
+    x: row.timestamp as string,
+    y: normalizeNumeric(row[`Vol_watering_${reactor}_fw`])
+  }));
   const powerSeries = series.map((row) => ({
     x: row.timestamp as string,
     y: heatExtractionPowerKw(
@@ -61,6 +72,7 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
       normalizeTemperaturePoint(row[`T_VL_${reactor}`])
     )
   }));
+
   const timeseriesOptions: ChartOptions<'line'> = {
     scales: {
       x: {
@@ -103,12 +115,9 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
       <div className="panel-header">
         <div>
           <h2>{reactor}</h2>
-          <p className="muted">{series.length} Datenpunkte · letzter Datenpunkt {typeof last?.timestamp === 'string' ? formatDateTime(last.timestamp) : 'kein Wert'}</p>
-        </div>
-        <div className="chip-row">
-          <span className="status-badge">Bewässerung {formatBool(latestState?.irrigation ?? false)}</span>
-          <span className="status-badge">Belüftung {formatBool(latestState?.ventilation ?? false)}</span>
-          <span className="status-badge">Abluft {formatBool(latestState?.exhaust ?? false)}</span>
+          <p className="muted">
+            {series.length} Datenpunkte · letzter Datenpunkt {typeof last?.timestamp === 'string' ? formatDateTime(last.timestamp) : 'kein Wert'}
+          </p>
         </div>
       </div>
       <div className="reactor-history-grid">
@@ -117,11 +126,11 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
           title={`Temperaturen ${reactor}`}
           data={{
             datasets: [
-              ...temperatureSensors.map((tag, index) => ({
+              ...tags.temperature.map((tag, index) => ({
                 label: formatSeriesLabel(tag.label),
                 data: makePoints(series, tag.key),
                 borderColor: sensorColors[index % sensorColors.length],
-                borderWidth: 1,
+                borderWidth: tag.key.includes('Innenraum') ? 2 : 1,
                 pointRadius: 0,
                 tension: 0.15
               })),
@@ -236,7 +245,7 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
                 label: 'Vorlauf',
                 data: series.map((row) => ({ x: row.timestamp as string, y: normalizeTemperaturePoint(row[`T_VL_${reactor}`]) })),
                 borderColor: '#38bdf8',
-                borderWidth: 1,
+                borderWidth: 2,
                 pointRadius: 0,
                 yAxisID: 'y1'
               },
@@ -244,13 +253,77 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
                 label: 'Rücklauf',
                 data: series.map((row) => ({ x: row.timestamp as string, y: normalizeTemperaturePoint(row[`T_RL_${reactor}`]) })),
                 borderColor: '#22c55e',
-                borderWidth: 1,
+                borderWidth: 2,
                 pointRadius: 0,
                 yAxisID: 'y1'
               }
             ]
           }}
           options={powerOptions}
+        />
+        <TimeSeriesChart
+          compact
+          title={`Bewässerung ${reactor}`}
+          data={{
+            datasets: [
+              {
+                label: 'Temperatur',
+                data: irrigationTemperature,
+                borderColor: '#38bdf8',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.18
+              },
+              {
+                label: 'Durchfluss',
+                data: irrigationFlow,
+                borderColor: actionColors.irrigation,
+                borderWidth: 2,
+                pointRadius: 0,
+                stepped: true,
+                yAxisID: 'y1'
+              },
+              {
+                label: 'Gesamtvolumen',
+                data: irrigationVolume,
+                borderColor: actionColors.freshWater,
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.12
+              },
+              {
+                label: 'Frischwasser gesamt',
+                data: freshWaterVolume,
+                borderColor: actionColors.exhaust,
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.12
+              }
+            ]
+          }}
+          options={{
+            ...timeseriesOptions,
+            scales: {
+              x: timeseriesOptions.scales?.x,
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'l / °C'
+                }
+              },
+              y1: {
+                position: 'right',
+                grid: {
+                  drawOnChartArea: false
+                },
+                title: {
+                  display: true,
+                  text: 'l/min'
+                }
+              }
+            }
+          }}
         />
       </div>
     </section>

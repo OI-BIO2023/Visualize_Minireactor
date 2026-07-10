@@ -16,7 +16,7 @@ const labelsByReactor = (reactor: ReactorId): LabelSpec[] => [
   { key: `T_oben_L_${reactor}`, x: 52, y: 36 },
   { key: `T_oben_R_${reactor}`, x: 268, y: 36 },
   { key: `T_Mittel_${reactor}`, x: 160, y: 96 },
-  { key: `T_Innenraum_${reactor}`, x: 244, y: 128 },
+  { key: `T_Innenraum_${reactor}`, x: 290, y: 128 },
   { key: `T_unter_L_${reactor}`, x: 52, y: 164 },
   { key: `T_unter_R_${reactor}`, x: 268, y: 164 }
 ];

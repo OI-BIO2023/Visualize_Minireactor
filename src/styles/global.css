@@ -66,8 +66,12 @@ a {
 }
 
 .brand-mark {
-  width: 132px;
+  width: 184px;
   max-width: 40vw;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(247, 250, 252, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.22);
   object-fit: contain;
   filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.24));
 }
@@ -346,6 +350,16 @@ a {
   color: var(--text);
   background: rgba(44, 168, 157, 0.12);
   cursor: pointer;
+}
+
+.filter-button-value {
+  border-color: rgba(35, 196, 131, 0.34);
+  background: rgba(35, 196, 131, 0.18);
+}
+
+.filter-button-event {
+  border-color: rgba(241, 180, 75, 0.34);
+  background: rgba(241, 180, 75, 0.18);
 }
 
 label {

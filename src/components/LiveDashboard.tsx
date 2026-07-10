@@ -13,7 +13,7 @@ export function LiveDashboard() {
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
-  const logoSrc = 'https://raw.githubusercontent.com/OI-BIO2023/Visualize_Minireactor/c87d845/public/logo_biologik.png';
+  const logoSrc = '/logo_biologik.png?v=20260710-5';
 
   useEffect(() => {
     let cancelled = false;

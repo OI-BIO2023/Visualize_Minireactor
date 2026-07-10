@@ -13,6 +13,7 @@ export function LiveDashboard() {
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
+  const logoSrc = '/logo_biologik.png?v=20260710';
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +66,7 @@ export function LiveDashboard() {
         <div className="brand-row">
           <div className="brand-mark">
             {!logoFailed ? (
-              <img src="/logo_biologik.png" alt="Biologik" loading="eager" decoding="async" onError={() => setLogoFailed(true)} />
+              <img src={logoSrc} alt="Biologik" loading="eager" decoding="async" onError={() => setLogoFailed(true)} />
             ) : (
               <div className="fallback-logo">Biologik</div>
             )}

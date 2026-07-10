@@ -70,10 +70,6 @@ export function LiveDashboard() {
               <div className="fallback-logo">Biologik</div>
             )}
           </div>
-          <div className="hero-copy">
-            <h1>Mini-Reaktoren Monitoring</h1>
-            <p className="muted">Live-Übersicht der Anlage mit Temperatur-, Gas- und Aktorikstatus.</p>
-          </div>
         </div>
         <a href="/history" className="back-link hero-history-link">
           Historie öffnen

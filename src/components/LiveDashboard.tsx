@@ -73,7 +73,7 @@ export function LiveDashboard() {
           </div>
         </div>
         <a href="/history" className="back-link hero-history-link">
-          Historie öffnen
+          Historie
         </a>
       </header>
       {qualityFlags.length ? (

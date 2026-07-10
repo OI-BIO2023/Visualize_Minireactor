@@ -2,7 +2,6 @@ import { REACTORS, type ReactorId } from '../config/reactors';
 import { biomassAverageTemperature, heatExtractionPowerKw, type Batch } from './derived';
 
 export const demoTimestamp = new Date('2026-07-09T10:00:00+02:00').toISOString();
-
 const rawTemp = (value: number) => Math.round(value * 100);
 
 const reactorValue = (reactor: ReactorId, offset: number) => {
@@ -106,11 +105,13 @@ export const demoHistorySeries = (reactor: ReactorId) =>
       [`T_oben_R_${reactor}`]: rawTemp(49 + index / 4),
       [`T_unter_L_${reactor}`]: rawTemp(44 + index / 6),
       [`T_unter_R_${reactor}`]: rawTemp(43 + index / 6),
+      [`T_Innenraum_${reactor}`]: rawTemp(39 + index / 18),
       [`HUM_oben_${reactor}`]: 72 - index / 8,
       [`HUM_unten_${reactor}`]: 67 - index / 10,
       [`Q_VL_${reactor}`]: 3 + index / 30,
       [`T_RL_${reactor}`]: rawTemp(33 + index / 20),
       [`T_VL_${reactor}`]: rawTemp(29 + index / 20),
+      [`T_IRR_${reactor}`]: rawTemp(18 + index / 40),
       [`Q_IRR_${reactor}`]: index % 8 < 2 ? 1.1 : 0,
       [`Vol_watering_${reactor}`]: 100 + index * 2,
       [`Vol_watering_${reactor}_fw`]: 40 + index,

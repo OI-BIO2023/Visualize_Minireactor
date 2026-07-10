@@ -1,16 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getBatches, getData, getLatest } from '../lib/api';
-import { demoBatches, demoHistorySeries, demoLatest } from '../lib/mock';
-import { type Batch } from '../lib/derived';
+import { getData, getLatest } from '../lib/api';
+import { demoHistorySeries, demoLatest } from '../lib/mock';
+import { type ExperimentSeries, DEFAULT_EXPERIMENT_ID, EXPERIMENT_SERIES, getExperimentSeries, resolveExperimentRange } from '../config/experiments';
 import { PeriodSelector } from './PeriodSelector';
 import { GlobalHistoryPanel } from './GlobalHistoryPanel';
 import { ReactorHistoryPanel } from './ReactorHistoryPanel';
 import { REACTORS } from '../config/reactors';
-
-const defaultRange = {
-  start: demoBatches[0].fill_at,
-  end: demoBatches[demoBatches.length - 1].empty_at ?? demoLatest.timestamp
-};
 
 const demoSeriesByReactor = {
   R1: demoHistorySeries('R1'),
@@ -56,9 +51,19 @@ const mergeLatestPoint = (series: Record<string, unknown>[], latest: Record<stri
 
 const isValidTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
 
+const csvExcludedKeys = new Set(['expiresAt', 'ident', 'payload', 'pk', 'sk', 'type']);
+
+const sanitizeCsvRows = (rows: Record<string, unknown>[]) =>
+  rows.map((row) =>
+    Object.fromEntries(
+      Object.entries(row).filter(([key, value]) => key === 'timestamp' || (!csvExcludedKeys.has(key) && (value == null || ['string', 'number', 'boolean'].includes(typeof value))))
+    )
+  );
+
 const toCsv = (rows: Record<string, unknown>[]) => {
   if (!rows.length) return '';
-  const headers = Array.from(new Set(['timestamp', ...rows.flatMap((row) => Object.keys(row))])).sort((a, b) => {
+  const sanitized = sanitizeCsvRows(rows);
+  const headers = Array.from(new Set(['timestamp', ...sanitized.flatMap((row) => Object.keys(row))])).sort((a, b) => {
     if (a === 'timestamp') return -1;
     if (b === 'timestamp') return 1;
     return a.localeCompare(b);
@@ -69,49 +74,18 @@ const toCsv = (rows: Record<string, unknown>[]) => {
     return `"${text.replaceAll('"', '""')}"`;
   };
   const lines = [headers.join(';')];
-  for (const row of rows) {
+  for (const row of sanitized) {
     lines.push(headers.map((header) => escapeCell(row[header])).join(';'));
   }
   return `\uFEFF${lines.join('\n')}`;
 };
 
 export function HistoryDashboard() {
-  const [batches, setBatches] = useState<Batch[]>(demoBatches);
-  const [range, setRange] = useState(defaultRange);
-  const [rangeInitialized, setRangeInitialized] = useState(false);
+  const [selectedExperimentId, setSelectedExperimentId] = useState<string>(DEFAULT_EXPERIMENT_ID);
   const [series, setSeries] = useState<Record<string, unknown>[]>(buildDemoHistory());
 
-  const availableRange = useMemo(() => {
-    const starts = batches.map((batch) => new Date(batch.fill_at).getTime()).filter((value) => Number.isFinite(value));
-    const ends = batches.map((batch) => new Date(batch.empty_at ?? demoLatest.timestamp).getTime()).filter((value) => Number.isFinite(value));
-    const minStart = starts.length ? new Date(Math.min(...starts)).toISOString() : defaultRange.start;
-    const maxEnd = ends.length ? new Date(Math.max(...ends)).toISOString() : defaultRange.end;
-    return { start: minStart, end: maxEnd };
-  }, [batches]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const payload = await getBatches();
-        if (!cancelled && payload.ok && payload.batches.length) {
-          setBatches(payload.batches);
-        }
-      } catch {
-        if (!cancelled) setBatches(demoBatches);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!rangeInitialized) {
-      setRange(availableRange);
-      setRangeInitialized(true);
-    }
-  }, [availableRange, rangeInitialized]);
+  const selectedExperiment: ExperimentSeries = useMemo(() => getExperimentSeries(selectedExperimentId), [selectedExperimentId]);
+  const range = useMemo(() => resolveExperimentRange(selectedExperiment), [selectedExperiment]);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,15 +113,18 @@ export function HistoryDashboard() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [range]);
+  }, [range.end, range.start]);
 
   const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
-  const downloadCsv = () => {
-    const blob = new Blob([toCsv(filteredSeries)], { type: 'text/csv;charset=utf-8;' });
+
+  const downloadCsv = async (type: 'value' | 'event') => {
+    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type });
+    const rows = payload.ok ? sanitizeCsvRows(payload.items.filter((row) => isValidTimestamp(row.timestamp))) : sanitizeCsvRows(filteredSeries);
+    const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `minireactor-historie-${range.start.slice(0, 10)}_${range.end.slice(0, 10)}.csv`;
+    anchor.download = `minireactor-${type}-${range.start.slice(0, 10)}_${range.end.slice(0, 10)}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -161,15 +138,18 @@ export function HistoryDashboard() {
           <h1>Historie</h1>
         </div>
         <div className="chip-row">
-          <button type="button" className="filter-button" onClick={downloadCsv}>
-            CSV herunterladen
+          <button type="button" className="filter-button" onClick={() => void downloadCsv('value')}>
+            CSV Wertdaten
+          </button>
+          <button type="button" className="filter-button" onClick={() => void downloadCsv('event')}>
+            CSV Ereignisse
           </button>
           <a href="/" className="back-link">
             Zur Live-Ansicht
           </a>
         </div>
       </header>
-      <PeriodSelector range={range} availableRange={availableRange} onChange={setRange} />
+      <PeriodSelector experiments={EXPERIMENT_SERIES} selectedExperimentId={selectedExperimentId} onSelectExperiment={setSelectedExperimentId} />
       <GlobalHistoryPanel series={filteredSeries} />
       <div className="history-grid">
         {REACTORS.map((reactor) => (

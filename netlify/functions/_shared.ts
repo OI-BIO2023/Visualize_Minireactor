@@ -26,9 +26,6 @@ export const config = {
 };
 
 export const alertConfig = {
-  enabled: envAny(['MY_STALE_ALERT_ENABLED', 'STALE_ALERT_ENABLED'], 'false') === 'true',
-  thresholdMinutes: Number(envAny(['MY_STALE_ALERT_THRESHOLD_MINUTES', 'STALE_ALERT_THRESHOLD_MINUTES'], '60')),
-  recipient: envAny(['MY_STALE_ALERT_RECIPIENT', 'STALE_ALERT_RECIPIENT'], 'oi@biologik.it'),
   smtpHost: envAny(['MY_SMTP_HOST', 'SMTP_HOST'], 'smtp.gmail.com'),
   smtpPort: Number(envAny(['MY_SMTP_PORT', 'SMTP_PORT'], '465')),
   smtpSecure: envAny(['MY_SMTP_SECURE', 'SMTP_SECURE'], 'true') !== 'false',

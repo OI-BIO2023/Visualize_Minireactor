@@ -32,6 +32,10 @@ const isMidnight = (value: string | number) => {
 const defaultXAxis: any = {
   x: {
     type: 'time',
+    title: {
+      display: true,
+      text: 'Datum / Uhrzeit'
+    },
     time: {
       unit: 'hour',
       tooltipFormat: 'dd.MM.yyyy HH:mm',
@@ -41,7 +45,6 @@ const defaultXAxis: any = {
     },
     ticks: {
       autoSkip: false,
-      stepSize: 6,
       maxRotation: 0,
       minRotation: 0,
       callback(value: string | number) {
@@ -49,7 +52,7 @@ const defaultXAxis: any = {
         if (Number.isNaN(date.getTime())) return '';
         const hour = date.getHours();
         if (hour === 0) return [format(date, 'dd.MM.yyyy'), '00 Uhr'];
-        if (hour === 6 || hour === 18) return `${hour.toString().padStart(2, '0')} Uhr`;
+        if (hour % 6 === 0) return `${hour.toString().padStart(2, '0')} Uhr`;
         return '';
       }
     },
@@ -67,7 +70,7 @@ const defaultXAxis: any = {
   y: {
     beginAtZero: false
   }
-};
+} as any;
 
 export function TimeSeriesChart({ title, data, options, compact = false }: Props) {
   const mergedScales = {
@@ -87,6 +90,10 @@ export function TimeSeriesChart({ title, data, options, compact = false }: Props
       grid: {
         ...(defaultXAxis.x?.grid ?? {}),
         ...(options?.scales?.x as any)?.grid
+      },
+      title: {
+        ...(defaultXAxis.x?.title ?? {}),
+        ...(options?.scales?.x as any)?.title
       }
     },
     y: {

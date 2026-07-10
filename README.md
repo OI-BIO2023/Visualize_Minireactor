@@ -35,5 +35,18 @@ npm run build
 - `MY_ALLOWED_IDENTS`
 - `MY_MAX_QUERY_DAYS`
 - `MY_CACHE_TTL_SECONDS`
+- `MY_STALE_ALERT_ENABLED`
+- `MY_STALE_ALERT_THRESHOLD_MINUTES`
+- `MY_STALE_ALERT_RECIPIENT`
+- `MY_SMTP_HOST`
+- `MY_SMTP_PORT`
+- `MY_SMTP_SECURE`
+- `MY_SMTP_USER`
+- `MY_SMTP_PASS`
+- `MY_SMTP_FROM`
+- `MY_ALERT_STATE_PK_PREFIX`
+- `MY_ALERT_STATE_SK`
 
 Legacy fallback names are still supported during rollout, but the `MY_...` variants are preferred.
+
+Stale alerts are implemented as a scheduled Netlify Function, but they stay disabled until `MY_STALE_ALERT_ENABLED=true` is set.

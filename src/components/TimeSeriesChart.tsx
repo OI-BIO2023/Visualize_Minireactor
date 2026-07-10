@@ -29,7 +29,16 @@ export function TimeSeriesChart({ title, data, options, compact = false }: Props
     maintainAspectRatio: false,
     interaction: { mode: 'nearest', intersect: false },
     plugins: {
-      legend: { position: 'bottom' },
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'line',
+          boxWidth: 28,
+          boxHeight: 4,
+          padding: 16
+        }
+      },
       zoom: {
         pan: { enabled: true, mode: 'x' },
         zoom: {

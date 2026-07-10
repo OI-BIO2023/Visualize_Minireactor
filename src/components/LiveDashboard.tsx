@@ -12,6 +12,7 @@ export function LiveDashboard() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,12 +48,6 @@ export function LiveDashboard() {
 
   const exhaustState = useMemo(() => (data ? getExhaustAnalysisState(data) : { active: false, reactor: 'unassigned' }), [data]);
 
-  const gasAssignment = useMemo(() => {
-    const assigned = data ? assignGasReactor(data) : 'unassigned';
-    if (assigned === 'ambiguous' || assigned === 'unassigned') return 'nicht zugeordnet';
-    return assigned;
-  }, [data]);
-
   const qualityFlags = useMemo<QualityFlag[]>(() => {
     const flags: QualityFlag[] = [];
     if (!data) flags.push('missing');
@@ -69,10 +64,15 @@ export function LiveDashboard() {
       <header className="hero hero-top">
         <div className="brand-row">
           <div className="brand-mark">
-            <img src="/logo_biologik.png" alt="Biologik" />
+            {!logoFailed ? (
+              <img src="/logo_biologik.png" alt="Biologik" loading="eager" decoding="async" onError={() => setLogoFailed(true)} />
+            ) : (
+              <div className="fallback-logo">Biologik</div>
+            )}
           </div>
-          <div>
+          <div className="hero-copy">
             <h1>Mini-Reaktoren Monitoring</h1>
+            <p className="muted">Live-Übersicht der Anlage mit Temperatur-, Gas- und Aktorikstatus.</p>
           </div>
         </div>
         <a href="/history" className="back-link hero-history-link">
@@ -93,7 +93,7 @@ export function LiveDashboard() {
           <ReactorCard key={reactor} reactor={reactor} data={data} flags={[]} />
         ))}
       </div>
-      <GasPanel data={data} assignedTo={String(gasAssignment)} timestamp={timestamp} flags={qualityFlags} processState={{ active: exhaustState.active, reactor: String(exhaustState.reactor) }} />
+      <GasPanel data={data} timestamp={timestamp} flags={qualityFlags} processState={{ active: exhaustState.active, reactor: String(exhaustState.reactor) }} />
     </main>
   );
 }

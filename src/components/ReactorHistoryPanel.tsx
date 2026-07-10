@@ -75,21 +75,14 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
 
   const timeseriesOptions: ChartOptions<'line'> = {
     scales: {
-      x: {
-        type: 'time',
-        time: { tooltipFormat: 'PPpp' }
-      },
       y: {
         beginAtZero: false
       }
     }
   };
+
   const powerOptions: ChartOptions<'line'> = {
     scales: {
-      x: {
-        type: 'time',
-        time: { tooltipFormat: 'PPpp' }
-      },
       y: {
         position: 'left',
         title: {
@@ -304,7 +297,6 @@ export function ReactorHistoryPanel({ reactor, series }: Props) {
           options={{
             ...timeseriesOptions,
             scales: {
-              x: timeseriesOptions.scales?.x,
               y: {
                 beginAtZero: false,
                 title: {

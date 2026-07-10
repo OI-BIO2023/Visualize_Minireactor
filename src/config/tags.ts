@@ -53,15 +53,16 @@ export const GLOBAL_TEMPERATURE_TAGS: FieldSpec[] = [
   { key: 'T_VL_global', label: 'Globaler Vorlauf', unit: '°C', min: -10, max: 100 },
   { key: 'T_FW', label: 'Frischwasser', unit: '°C', min: -10, max: 90 },
   { key: 'T_AER', label: 'Belüftungsluft', unit: '°C', min: -10, max: 90 },
-  { key: 'T_Absaugung', label: 'Absaugung', unit: '°C', min: -10, max: 90 },
   { key: 'T_Umgebung', label: 'Umgebung', unit: '°C', min: -30, max: 60 }
 ];
+
+export const GAS_TEMPERATURE_TAGS: FieldSpec[] = [{ key: 'T_Absaugung', label: 'Absaugung', unit: '°C', min: -10, max: 90 }];
 
 export const GLOBAL_STATUS_TAGS: FieldSpec[] = [
   { key: 'C0_1_Komp_AER', label: 'Kompressor Belüftung', kind: 'boolean' },
   { key: 'C0_2_Komp_AER', label: 'Kompressor Abluft', kind: 'boolean' },
   { key: 'P01_P02_Pn', label: 'Pumpe', kind: 'boolean' },
-  { key: 'Mischventil_V01', label: 'Mischventil', kind: 'boolean' }
+  { key: 'Mischventil_V01', label: 'Mischventil', unit: '%', kind: 'number' }
 ];
 
 export const GLOBAL_TAGS: FieldSpec[] = [...GLOBAL_TEMPERATURE_TAGS, ...GLOBAL_STATUS_TAGS];

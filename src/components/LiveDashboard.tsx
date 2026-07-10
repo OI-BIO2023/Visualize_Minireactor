@@ -13,7 +13,7 @@ export function LiveDashboard() {
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [logoFailed, setLogoFailed] = useState(false);
-  const logoSrc = '/logo_biologik.png?v=20260710';
+  const logoSrc = '/logo_biologik.png?v=20260710-2';
 
   useEffect(() => {
     let cancelled = false;
@@ -73,7 +73,7 @@ export function LiveDashboard() {
           </div>
         </div>
         <a href="/history" className="back-link hero-history-link">
-          Historie öffnen
+          Historie
         </a>
       </header>
       {qualityFlags.length ? (

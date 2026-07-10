@@ -1,20 +1,29 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const logoUrl = 'https://raw.githubusercontent.com/OI-BIO2023/Visualize_Minireactor/main/public/logo_biologik.png';
-const outputPath = fileURLToPath(new URL('../public/logo_biologik.png', import.meta.url));
+const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
+const logoPath = join(root, 'public', 'logo_biologik.png');
+const liveDashboardPath = join(root, 'src', 'components', 'LiveDashboard.tsx');
 
 async function main() {
-  const response = await fetch(logoUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch logo: ${response.status} ${response.statusText}`);
+  const [logoBytes, liveDashboardSource] = await Promise.all([
+    readFile(logoPath),
+    readFile(liveDashboardPath, 'utf8')
+  ]);
+
+  const logoDataUri = `data:image/png;base64,${logoBytes.toString('base64')}`;
+  const updated = liveDashboardSource.replace(
+    /const logoSrc = .*?;/,
+    `const logoSrc = '${logoDataUri}';`
+  );
+
+  if (updated === liveDashboardSource) {
+    throw new Error('Could not find the logo source line in LiveDashboard.tsx');
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, buffer);
-  console.log(`Fetched original logo to ${outputPath}`);
+  await writeFile(liveDashboardPath, updated, 'utf8');
+  console.log('Embedded the original logo into LiveDashboard.tsx');
 }
 
 main().catch((error) => {

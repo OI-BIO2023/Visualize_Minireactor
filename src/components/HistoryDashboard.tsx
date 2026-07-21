@@ -14,6 +14,9 @@ const demoSeriesByReactor = {
   R4: demoHistorySeries('R4')
 };
 
+const HISTORY_PAGE_LIMIT = 2500;
+const HISTORY_RENDER_LIMIT = 1200;
+
 const buildDemoHistory = () => {
   const rawTemp = (value: number) => Math.round(value * 100);
   return demoSeriesByReactor.R1.map((row, index) => ({
@@ -47,6 +50,15 @@ const mergeLatestPoint = (series: Record<string, unknown>[], latest: Record<stri
     return [...series, latest];
   }
   return series;
+};
+
+const downsampleSeries = (rows: Record<string, unknown>[], maxPoints: number) => {
+  if (rows.length <= maxPoints) return rows;
+  const step = Math.ceil(rows.length / maxPoints);
+  const sampled = rows.filter((_, index) => index % step === 0);
+  const last = rows.at(-1);
+  if (last && sampled.at(-1) !== last) sampled.push(last);
+  return sampled;
 };
 
 const isValidTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
@@ -83,6 +95,7 @@ const toCsv = (rows: Record<string, unknown>[]) => {
 export function HistoryDashboard() {
   const [selectedExperimentId, setSelectedExperimentId] = useState<string>(DEFAULT_EXPERIMENT_ID);
   const [series, setSeries] = useState<Record<string, unknown>[]>(buildDemoHistory());
+  const [message, setMessage] = useState<string | null>(null);
 
   const selectedExperiment: ExperimentSeries = useMemo(() => getExperimentSeries(selectedExperimentId), [selectedExperimentId]);
   const range = useMemo(() => resolveExperimentRange(selectedExperiment), [selectedExperiment]);
@@ -92,18 +105,29 @@ export function HistoryDashboard() {
     const loadSeries = async () => {
       try {
         const [dataPayload, latestPayload] = await Promise.all([
-          getData({ start: range.start, end: range.end, ident: 'MI', type: 'value' }),
+          getData({ start: range.start, end: range.end, ident: 'MI', type: 'value', limit: HISTORY_PAGE_LIMIT }),
           getLatest('MI')
         ]);
         if (cancelled) return;
         if (dataPayload.ok) {
           const merged = mergeLatestPoint(dataPayload.items, latestPayload.ok ? latestPayload.item : null);
-          setSeries(merged.length ? merged : buildDemoHistory());
+          const displaySeries = downsampleSeries(merged.length ? merged : buildDemoHistory(), HISTORY_RENDER_LIMIT);
+          setSeries(displaySeries);
+          setMessage(
+            dataPayload.message ??
+              (merged.length > displaySeries.length
+                ? `Anzeige auf ${displaySeries.length} von ${merged.length} Datenpunkten reduziert.`
+                : null)
+          );
           return;
         }
         setSeries(buildDemoHistory());
+        setMessage(dataPayload.message ?? 'Historiedaten konnten nicht geladen werden, Demo-Daten angezeigt.');
       } catch {
-        if (!cancelled) setSeries(buildDemoHistory());
+        if (!cancelled) {
+          setSeries(buildDemoHistory());
+          setMessage('Historiedaten konnten nicht geladen werden, Demo-Daten angezeigt.');
+        }
       }
     };
 
@@ -118,7 +142,7 @@ export function HistoryDashboard() {
   const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
 
   const downloadCsv = async (type: 'value' | 'event') => {
-    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type });
+    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type, limit: 5000 });
     const rows = payload.ok ? sanitizeCsvRows(payload.items.filter((row) => isValidTimestamp(row.timestamp))) : sanitizeCsvRows(filteredSeries);
     const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
@@ -149,6 +173,7 @@ export function HistoryDashboard() {
           </a>
         </div>
       </header>
+      {message ? <p className="hint">{message}</p> : null}
       <PeriodSelector experiments={EXPERIMENT_SERIES} selectedExperimentId={selectedExperimentId} onSelectExperiment={setSelectedExperimentId} />
       <GlobalHistoryPanel series={filteredSeries} />
       <div className="history-grid">

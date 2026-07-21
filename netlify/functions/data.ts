@@ -4,6 +4,9 @@ import { config, ddb, json, normalizeRecord, parseQuery, validateIdent, normaliz
 import type { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { minutesBetween } from '../../src/lib/time';
 
+const DEFAULT_LIMIT = 2500;
+const MAX_LIMIT = 5000;
+
 const cacheHeadersForRange = (start: string, end: string) => {
   const hours = minutesBetween(start, end) / 60;
   const maxAge = hours <= 2 ? config.cacheTtlSeconds : hours <= 48 ? Math.max(config.cacheTtlSeconds * 4, 120) : 900;
@@ -16,6 +19,8 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
     const start = parseQuery(event, 'start');
     const end = parseQuery(event, 'end');
     const type = parseQuery(event, 'type') ?? 'value';
+    const requestedLimit = Number.parseInt(parseQuery(event, 'limit') ?? '', 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), MAX_LIMIT) : DEFAULT_LIMIT;
 
     if (!config.tableName) return json(500, { ok: false, message: 'DDB_TABLE is not configured' });
     if (!start || !end) return json(400, { ok: false, message: 'start and end are required' });
@@ -40,25 +45,36 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
 
     const items: Record<string, unknown>[] = [];
     let ExclusiveStartKey: Record<string, AttributeValue> | undefined;
+    let truncated = false;
 
     do {
-      const response = await ddb.send(new QueryCommand({ ...params, ExclusiveStartKey }));
+      const remaining = limit - items.length;
+      if (remaining <= 0) {
+        truncated = true;
+        break;
+      }
+
+      const response = await ddb.send(new QueryCommand({ ...params, ExclusiveStartKey, Limit: remaining, ScanIndexForward: false }));
       for (const item of response.Items ?? []) {
         const flat = unmarshall(item);
         const normalized = normalizeRecord(flat);
         if (normalized) items.push(normalized);
+        if (items.length >= limit) break;
       }
       ExclusiveStartKey = response.LastEvaluatedKey;
-    } while (ExclusiveStartKey);
+      if (items.length >= limit && ExclusiveStartKey) truncated = true;
+    } while (ExclusiveStartKey && items.length < limit);
 
     return json(
       200,
       {
         ok: true,
-        items,
+        items: items.reverse(),
         count: items.length,
         start: range.start,
-        end: range.end
+        end: range.end,
+        truncated,
+        message: truncated ? `Anzeige auf ${limit} Datenpunkte begrenzt.` : undefined
       },
       cacheHeadersForRange(range.start, range.end)
     );

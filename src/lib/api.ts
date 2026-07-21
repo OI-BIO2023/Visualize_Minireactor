@@ -15,6 +15,7 @@ export type DataResponse = {
   count: number;
   start: string;
   end: string;
+  truncated?: boolean;
   message?: string;
 };
 
@@ -45,9 +46,9 @@ export const fetchJson = async <T>(url: string, attempts = 3): Promise<T> => {
 
 export const getLatest = (ident = 'MI') => fetchJson<LatestResponse>(`/.netlify/functions/latest?ident=${encodeURIComponent(ident)}`);
 
-export const getData = (params: { ident?: string; start: string; end: string; type?: string }) =>
+export const getData = (params: { ident?: string; start: string; end: string; type?: string; limit?: number }) =>
   fetchJson<DataResponse>(
-    `/.netlify/functions/data?ident=${encodeURIComponent(params.ident ?? 'MI')}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}&type=${encodeURIComponent(params.type ?? 'value')}`
+    `/.netlify/functions/data?ident=${encodeURIComponent(params.ident ?? 'MI')}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}&type=${encodeURIComponent(params.type ?? 'value')}${params.limit ? `&limit=${encodeURIComponent(String(params.limit))}` : ''}`
   );
 
 export const getBatches = () => fetchJson<{ ok: boolean; batches: Batch[] }>(`/.netlify/functions/batches`);

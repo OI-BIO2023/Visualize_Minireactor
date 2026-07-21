@@ -14,8 +14,9 @@ const demoSeriesByReactor = {
   R4: demoHistorySeries('R4')
 };
 
-const HISTORY_PAGE_LIMIT = 2500;
-const HISTORY_RENDER_LIMIT = 1200;
+const HISTORY_PAGE_LIMIT = 1200;
+const HISTORY_RENDER_LIMIT = 900;
+const CSV_QUERY_LIMIT = 5000;
 
 const buildDemoHistory = () => {
   const rawTemp = (value: number) => Math.round(value * 100);
@@ -61,6 +62,8 @@ const downsampleSeries = (rows: Record<string, unknown>[], maxPoints: number) =>
   return sampled;
 };
 
+const midpointIso = (start: string, end: string) => new Date((new Date(start).getTime() + new Date(end).getTime()) / 2).toISOString();
+
 const isValidTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
 
 const csvExcludedKeys = new Set(['expiresAt', 'ident', 'payload', 'pk', 'sk', 'ts', 'type']);
@@ -90,6 +93,28 @@ const toCsv = (rows: Record<string, unknown>[]) => {
     lines.push(headers.map((header) => escapeCell(row[header])).join(';'));
   }
   return `\uFEFF${lines.join('\n')}`;
+};
+
+const fetchCsvRows = async (start: string, end: string, type: 'value' | 'event', depth = 0): Promise<Record<string, unknown>[]> => {
+  const payload = await getData({ start, end, ident: 'MI', type, limit: CSV_QUERY_LIMIT });
+  if (!payload.ok) {
+    throw new Error(payload.message ?? 'CSV-Export konnte nicht geladen werden');
+  }
+
+  const rows = payload.items.filter((row) => isValidTimestamp(row.timestamp));
+  if (!payload.truncated || depth >= 5) {
+    return rows;
+  }
+
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime()) || endDate.getTime() - startDate.getTime() < 2 * 60 * 60 * 1000) {
+    return rows;
+  }
+
+  const mid = midpointIso(start, end);
+  const [left, right] = await Promise.all([fetchCsvRows(start, mid, type, depth + 1), fetchCsvRows(mid, end, type, depth + 1)]);
+  return [...left, ...right];
 };
 
 export function HistoryDashboard() {
@@ -142,8 +167,7 @@ export function HistoryDashboard() {
   const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
 
   const downloadCsv = async (type: 'value' | 'event') => {
-    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type, limit: 0 });
-    const rows = payload.ok ? sanitizeCsvRows(payload.items.filter((row) => isValidTimestamp(row.timestamp))) : sanitizeCsvRows(filteredSeries);
+    const rows = sanitizeCsvRows(await fetchCsvRows(range.start, range.end, type).catch(() => filteredSeries));
     const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement('a');

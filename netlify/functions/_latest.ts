@@ -25,7 +25,8 @@ export const fetchLatestRecord = async (ident: string) => {
         ':type': { S: 'value' }
       },
       FilterExpression: '#type = :type',
-      ScanIndexForward: false
+      ScanIndexForward: false,
+      Limit: 1
     } as const;
 
     const response = await ddb.send(new QueryCommand(params));

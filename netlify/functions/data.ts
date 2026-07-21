@@ -19,8 +19,9 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
     const start = parseQuery(event, 'start');
     const end = parseQuery(event, 'end');
     const type = parseQuery(event, 'type') ?? 'value';
-    const requestedLimit = Number.parseInt(parseQuery(event, 'limit') ?? '', 10);
-    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), MAX_LIMIT) : DEFAULT_LIMIT;
+    const limitParam = parseQuery(event, 'limit');
+    const requestedLimit = Number.parseInt(limitParam ?? '', 10);
+    const limit = limitParam == null ? DEFAULT_LIMIT : requestedLimit <= 0 ? null : Math.min(requestedLimit, MAX_LIMIT);
 
     if (!config.tableName) return json(500, { ok: false, message: 'DDB_TABLE is not configured' });
     if (!start || !end) return json(400, { ok: false, message: 'start and end are required' });
@@ -48,22 +49,22 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
     let truncated = false;
 
     do {
-      const remaining = limit - items.length;
-      if (remaining <= 0) {
+      const remaining = limit == null ? undefined : limit - items.length;
+      if (remaining != null && remaining <= 0) {
         truncated = true;
         break;
       }
 
-      const response = await ddb.send(new QueryCommand({ ...params, ExclusiveStartKey, Limit: remaining, ScanIndexForward: false }));
+      const response = await ddb.send(new QueryCommand({ ...params, ExclusiveStartKey, ...(remaining != null ? { Limit: remaining } : {}), ScanIndexForward: false }));
       for (const item of response.Items ?? []) {
         const flat = unmarshall(item);
         const normalized = normalizeRecord(flat);
         if (normalized) items.push(normalized);
-        if (items.length >= limit) break;
+        if (limit != null && items.length >= limit) break;
       }
       ExclusiveStartKey = response.LastEvaluatedKey;
-      if (items.length >= limit && ExclusiveStartKey) truncated = true;
-    } while (ExclusiveStartKey && items.length < limit);
+      if (limit != null && items.length >= limit && ExclusiveStartKey) truncated = true;
+    } while (ExclusiveStartKey && (limit == null || items.length < limit));
 
     return json(
       200,
@@ -74,7 +75,7 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
         start: range.start,
         end: range.end,
         truncated,
-        message: truncated ? `Anzeige auf ${limit} Datenpunkte begrenzt.` : undefined
+        message: truncated && limit != null ? `Anzeige auf ${limit} Datenpunkte begrenzt.` : undefined
       },
       cacheHeadersForRange(range.start, range.end)
     );

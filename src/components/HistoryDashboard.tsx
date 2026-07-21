@@ -142,7 +142,7 @@ export function HistoryDashboard() {
   const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
 
   const downloadCsv = async (type: 'value' | 'event') => {
-    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type, limit: 5000 });
+    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type, limit: 0 });
     const rows = payload.ok ? sanitizeCsvRows(payload.items.filter((row) => isValidTimestamp(row.timestamp))) : sanitizeCsvRows(filteredSeries);
     const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);

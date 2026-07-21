@@ -48,7 +48,7 @@ export const getLatest = (ident = 'MI') => fetchJson<LatestResponse>(`/.netlify/
 
 export const getData = (params: { ident?: string; start: string; end: string; type?: string; limit?: number }) =>
   fetchJson<DataResponse>(
-    `/.netlify/functions/data?ident=${encodeURIComponent(params.ident ?? 'MI')}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}&type=${encodeURIComponent(params.type ?? 'value')}${params.limit ? `&limit=${encodeURIComponent(String(params.limit))}` : ''}`
+    `/.netlify/functions/data?ident=${encodeURIComponent(params.ident ?? 'MI')}&start=${encodeURIComponent(params.start)}&end=${encodeURIComponent(params.end)}&type=${encodeURIComponent(params.type ?? 'value')}${params.limit !== undefined ? `&limit=${encodeURIComponent(String(params.limit))}` : ''}`
   );
 
 export const getBatches = () => fetchJson<{ ok: boolean; batches: Batch[] }>(`/.netlify/functions/batches`);

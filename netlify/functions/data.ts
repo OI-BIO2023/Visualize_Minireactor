@@ -4,6 +4,21 @@ import { config, ddb, json, normalizeRecord, parseQuery, validateIdent, normaliz
 import type { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { minutesBetween } from '../../src/lib/time';
 
+const DEFAULT_LIMIT = 2500;
+const MAX_LIMIT = 5000;
+
+const decodeCursor = (value: string | null): Record<string, AttributeValue> | undefined => {
+  if (!value) return undefined;
+  const decoded = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as unknown;
+  if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) {
+    throw new Error('Invalid cursor');
+  }
+  return decoded as Record<string, AttributeValue>;
+};
+
+const encodeCursor = (value: Record<string, AttributeValue> | undefined): string | null =>
+  value ? Buffer.from(JSON.stringify(value), 'utf8').toString('base64url') : null;
+
 const cacheHeadersForRange = (start: string, end: string) => {
   const hours = minutesBetween(start, end) / 60;
   const maxAge = hours <= 2 ? config.cacheTtlSeconds : hours <= 48 ? Math.max(config.cacheTtlSeconds * 4, 120) : 900;
@@ -16,6 +31,10 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
     const start = parseQuery(event, 'start');
     const end = parseQuery(event, 'end');
     const type = parseQuery(event, 'type') ?? 'value';
+    const limitParam = parseQuery(event, 'limit');
+    const requestedLimit = Number.parseInt(limitParam ?? '', 10);
+    const limit = limitParam == null ? DEFAULT_LIMIT : requestedLimit <= 0 ? null : Math.min(requestedLimit, MAX_LIMIT);
+    const initialCursor = decodeCursor(parseQuery(event, 'cursor'));
 
     if (!config.tableName) return json(500, { ok: false, message: 'DDB_TABLE is not configured' });
     if (!start || !end) return json(400, { ok: false, message: 'start and end are required' });
@@ -39,26 +58,38 @@ export const handler = async (event: { queryStringParameters?: Record<string, st
     } as const;
 
     const items: Record<string, unknown>[] = [];
-    let ExclusiveStartKey: Record<string, AttributeValue> | undefined;
+    let ExclusiveStartKey: Record<string, AttributeValue> | undefined = initialCursor;
+    let truncated = false;
 
     do {
-      const response = await ddb.send(new QueryCommand({ ...params, ExclusiveStartKey }));
+      const remaining = limit == null ? undefined : limit - items.length;
+      if (remaining != null && remaining <= 0) {
+        truncated = true;
+        break;
+      }
+
+      const response = await ddb.send(new QueryCommand({ ...params, ExclusiveStartKey, ...(remaining != null ? { Limit: remaining } : {}), ScanIndexForward: false }));
       for (const item of response.Items ?? []) {
         const flat = unmarshall(item);
         const normalized = normalizeRecord(flat);
         if (normalized) items.push(normalized);
+        if (limit != null && items.length >= limit) break;
       }
       ExclusiveStartKey = response.LastEvaluatedKey;
-    } while (ExclusiveStartKey);
+      if (limit != null && items.length >= limit && ExclusiveStartKey) truncated = true;
+    } while (ExclusiveStartKey && (limit == null || items.length < limit));
 
     return json(
       200,
       {
         ok: true,
-        items,
+        items: items.reverse(),
         count: items.length,
         start: range.start,
-        end: range.end
+        end: range.end,
+        truncated,
+        nextCursor: truncated ? encodeCursor(ExclusiveStartKey) : null,
+        message: truncated && limit != null ? `Anzeige auf ${limit} Datenpunkte begrenzt.` : undefined
       },
       cacheHeadersForRange(range.start, range.end)
     );

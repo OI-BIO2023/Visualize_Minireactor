@@ -7,7 +7,7 @@ import { ReactorCard } from './ReactorCard';
 import { GasPanel } from './GasPanel';
 import { QualityBadge } from './QualityBadge';
 import type { QualityFlag } from '../lib/quality';
-import logoSrc from '../assets/logo_biologik.png';
+import { logoDataUri as logoSrc } from '../generated/logoData';
 
 export function LiveDashboard() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);

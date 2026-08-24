@@ -22,17 +22,17 @@ export type ExperimentSeries = {
 // Keep the structure stable so each series can be referenced unambiguously by id.
 export const EXPERIMENT_SERIES: ExperimentSeries[] = [
   {
-    id: 'MI-2026-SUMMER',
-    title: 'MiniReactor Sommer 2026',
+    id: '2026-SUMMER',
+    title: 'Sommer 2026',
     description: 'Hauptversuchsreihe für den laufenden Demonstratorbetrieb.',
-    start: '2026-07-01T08:00:00+02:00',
+    start: '2026-07-13T08:00:00+02:00',
     plannedEnd: '2026-09-29T10:00:00+02:00',
     reactors: ['R1', 'R2', 'R3', 'R4'],
     biomass: {
-      summary: '50 % Apfel, 50 % Traube',
+      summary: '46kg potatura vite, 40kg letame cavallo',
       mix: [
-        { label: 'Apfel', sharePercent: 50 },
-        { label: 'Traube', sharePercent: 50 }
+        { label: 'potatura vite', sharePercent: 53 },
+        { label: 'letame cavallo', sharePercent: 47 }
       ]
     }
   }

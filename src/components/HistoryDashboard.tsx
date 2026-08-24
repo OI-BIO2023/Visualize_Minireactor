@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getData, getLatest } from '../lib/api';
+import { getAllData, getData, getLatest } from '../lib/api';
 import { demoHistorySeries, demoLatest } from '../lib/mock';
 import { type ExperimentSeries, DEFAULT_EXPERIMENT_ID, EXPERIMENT_SERIES, getExperimentSeries, resolveExperimentRange } from '../config/experiments';
 import { PeriodSelector } from './PeriodSelector';
@@ -13,6 +13,10 @@ const demoSeriesByReactor = {
   R3: demoHistorySeries('R3'),
   R4: demoHistorySeries('R4')
 };
+
+const HISTORY_PAGE_LIMIT = 1200;
+const HISTORY_RENDER_LIMIT = 900;
+const CSV_QUERY_LIMIT = 5000;
 
 const buildDemoHistory = () => {
   const rawTemp = (value: number) => Math.round(value * 100);
@@ -49,6 +53,15 @@ const mergeLatestPoint = (series: Record<string, unknown>[], latest: Record<stri
   return series;
 };
 
+const downsampleSeries = (rows: Record<string, unknown>[], maxPoints: number) => {
+  if (rows.length <= maxPoints) return rows;
+  const step = Math.ceil(rows.length / maxPoints);
+  const sampled = rows.filter((_, index) => index % step === 0);
+  const last = rows.at(-1);
+  if (last && sampled.at(-1) !== last) sampled.push(last);
+  return sampled;
+};
+
 const isValidTimestamp = (value: unknown) => typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
 
 const csvExcludedKeys = new Set(['expiresAt', 'ident', 'payload', 'pk', 'sk', 'ts', 'type']);
@@ -83,27 +96,40 @@ const toCsv = (rows: Record<string, unknown>[]) => {
 export function HistoryDashboard() {
   const [selectedExperimentId, setSelectedExperimentId] = useState<string>(DEFAULT_EXPERIMENT_ID);
   const [series, setSeries] = useState<Record<string, unknown>[]>(buildDemoHistory());
+  const [message, setMessage] = useState<string | null>(null);
+  const [csvLoading, setCsvLoading] = useState(false);
 
   const selectedExperiment: ExperimentSeries = useMemo(() => getExperimentSeries(selectedExperimentId), [selectedExperimentId]);
-  const range = useMemo(() => resolveExperimentRange(selectedExperiment), [selectedExperiment]);
 
   useEffect(() => {
     let cancelled = false;
     const loadSeries = async () => {
       try {
+        const currentRange = resolveExperimentRange(selectedExperiment);
         const [dataPayload, latestPayload] = await Promise.all([
-          getData({ start: range.start, end: range.end, ident: 'MI', type: 'value' }),
+          getData({ start: currentRange.start, end: currentRange.end, ident: 'MI', type: 'value', limit: HISTORY_PAGE_LIMIT }),
           getLatest('MI')
         ]);
         if (cancelled) return;
         if (dataPayload.ok) {
           const merged = mergeLatestPoint(dataPayload.items, latestPayload.ok ? latestPayload.item : null);
-          setSeries(merged.length ? merged : buildDemoHistory());
+          const displaySeries = downsampleSeries(merged.length ? merged : buildDemoHistory(), HISTORY_RENDER_LIMIT);
+          setSeries(displaySeries);
+          setMessage(
+            dataPayload.message ??
+              (merged.length > displaySeries.length
+                ? `Anzeige auf ${displaySeries.length} von ${merged.length} Datenpunkten reduziert.`
+                : null)
+          );
           return;
         }
         setSeries(buildDemoHistory());
+        setMessage(dataPayload.message ?? 'Historiedaten konnten nicht geladen werden, Demo-Daten angezeigt.');
       } catch {
-        if (!cancelled) setSeries(buildDemoHistory());
+        if (!cancelled) {
+          setSeries(buildDemoHistory());
+          setMessage('Historiedaten konnten nicht geladen werden, Demo-Daten angezeigt.');
+        }
       }
     };
 
@@ -113,22 +139,33 @@ export function HistoryDashboard() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [range.end, range.start]);
+  }, [selectedExperiment]);
 
   const filteredSeries = series.filter((row) => isValidTimestamp(row.timestamp));
 
   const downloadCsv = async (type: 'value' | 'event') => {
-    const payload = await getData({ start: range.start, end: range.end, ident: 'MI', type });
-    const rows = payload.ok ? sanitizeCsvRows(payload.items.filter((row) => isValidTimestamp(row.timestamp))) : sanitizeCsvRows(filteredSeries);
-    const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `minireactor-${type}-${range.start.slice(0, 10)}_${range.end.slice(0, 10)}.csv`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.URL.revokeObjectURL(url);
+    setCsvLoading(true);
+    setMessage(null);
+    try {
+      // Resolve "now" at click time. A long-lived dashboard tab must not keep
+      // exporting only up to the time at which the page was first opened.
+      const exportRange = resolveExperimentRange(selectedExperiment);
+      const allRows = await getAllData({ start: exportRange.start, end: exportRange.end, ident: 'MI', type, limit: CSV_QUERY_LIMIT });
+      const rows = sanitizeCsvRows(allRows.filter((row) => isValidTimestamp(row.timestamp)));
+      const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `minireactor-${type}-${exportRange.start.slice(0, 10)}_${exportRange.end.slice(0, 10)}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage(error instanceof Error ? `CSV-Export fehlgeschlagen: ${error.message}` : 'CSV-Export fehlgeschlagen.');
+    } finally {
+      setCsvLoading(false);
+    }
   };
 
   return (
@@ -138,10 +175,10 @@ export function HistoryDashboard() {
           <h1>Historie</h1>
         </div>
         <div className="chip-row">
-          <button type="button" className="filter-button filter-button-value" onClick={() => void downloadCsv('value')}>
-            CSV Value
+          <button type="button" className="filter-button filter-button-value" disabled={csvLoading} onClick={() => void downloadCsv('value')}>
+            {csvLoading ? 'CSV wird geladen ...' : 'CSV Value'}
           </button>
-          <button type="button" className="filter-button filter-button-event" onClick={() => void downloadCsv('event')}>
+          <button type="button" className="filter-button filter-button-event" disabled={csvLoading} onClick={() => void downloadCsv('event')}>
             CSV Event
           </button>
           <a href="/" className="back-link">
@@ -149,6 +186,7 @@ export function HistoryDashboard() {
           </a>
         </div>
       </header>
+      {message ? <p className="hint">{message}</p> : null}
       <PeriodSelector experiments={EXPERIMENT_SERIES} selectedExperimentId={selectedExperimentId} onSelectExperiment={setSelectedExperimentId} />
       <GlobalHistoryPanel series={filteredSeries} />
       <div className="history-grid">

@@ -12,6 +12,12 @@ export const isStale = (timestamp: string | null | undefined, thresholdMinutes =
   return ageMinutes != null && ageMinutes > thresholdMinutes;
 };
 
+export const isMissingOrStale = (
+  timestamp: string | null | undefined,
+  thresholdMinutes = DEFAULT_STALE_THRESHOLD_MINUTES,
+  now = Date.now()
+): boolean => !timestamp || isStale(timestamp, thresholdMinutes, now);
+
 export const formatStaleDuration = (timestamp: string | null | undefined, now = Date.now()): string => {
   const ageMinutes = minutesSince(timestamp, now);
   if (ageMinutes == null) return 'unbekannt';

@@ -12,6 +12,14 @@ table = dynamodb.Table(os.environ["TABLE_NAME"])
 INGEST_SECRET = os.environ.get("INGEST_SECRET", "")
 VALUE_RETENTION_DAYS = int(os.environ.get("VALUE_RETENTION_DAYS", "90"))
 EVENT_RETENTION_DAYS = int(os.environ.get("EVENT_RETENTION_DAYS", "180"))
+HMI_HEARTBEAT_IDENT = os.environ.get("HMI_HEARTBEAT_IDENT", "MI").strip() or "MI"
+HMI_HEARTBEAT_FIELDS = tuple(
+    field.strip()
+    for field in os.environ.get("HMI_HEARTBEAT_FIELDS", "K.T1").split(",")
+    if field.strip()
+)
+HMI_HEARTBEAT_PK_PREFIX = os.environ.get("HMI_HEARTBEAT_PK_PREFIX", "HEARTBEAT#")
+HMI_HEARTBEAT_SK = os.environ.get("HMI_HEARTBEAT_SK", "HMI#VALUE")
 
 
 def lambda_handler(event, context):
@@ -43,6 +51,8 @@ def lambda_handler(event, context):
                 print("ITEM_TO_STORE:", json.dumps(item, default=decimal_serializer))
                 table.put_item(Item=item)
                 written += 1
+                if is_hmi_heartbeat(msg, item):
+                    update_hmi_heartbeat(msg, item)
             except Exception as exc:
                 errors.append(str(exc))
 
@@ -112,6 +122,51 @@ def build_clean_payload(msg):
         "timestamp",
     }
     return {key: value for key, value in msg.items() if key not in excluded_keys}
+
+
+def is_hmi_heartbeat(msg, item):
+    """Only the complete MI measurement frame is a valid HMI heartbeat."""
+    return (
+        item.get("ident") == HMI_HEARTBEAT_IDENT
+        and item.get("type") == "value"
+        and bool(HMI_HEARTBEAT_FIELDS)
+        and all(field in msg for field in HMI_HEARTBEAT_FIELDS)
+    )
+
+
+def heartbeat_observed_at(msg):
+    for key in ("server.timestamp", "timestamp"):
+        value = msg.get(key)
+        if isinstance(value, (Decimal, int, float)):
+            try:
+                return datetime.fromtimestamp(float(value), timezone.utc).isoformat().replace(
+                    "+00:00", "Z"
+                )
+            except (OverflowError, OSError, ValueError):
+                pass
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def update_hmi_heartbeat(msg, item):
+    """Keep the newest timestamp; historical replays must not rewind it."""
+    observed_at = heartbeat_observed_at(msg)
+    try:
+        table.put_item(
+            Item={
+                "pk": f"{HMI_HEARTBEAT_PK_PREFIX}{HMI_HEARTBEAT_IDENT}",
+                "sk": HMI_HEARTBEAT_SK,
+                "lastSeenAt": observed_at,
+                "sourceTimestamp": item["ts"],
+                "ident": HMI_HEARTBEAT_IDENT,
+                "type": "heartbeat",
+                "requiredFields": list(HMI_HEARTBEAT_FIELDS),
+                "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            },
+            ConditionExpression="attribute_not_exists(lastSeenAt) OR lastSeenAt < :ts",
+            ExpressionAttributeValues={":ts": observed_at},
+        )
+    except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+        pass
 
 
 def extract_ident(msg):

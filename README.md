@@ -46,7 +46,13 @@ npm run build
 - `MY_SMTP_FROM`
 - `MY_ALERT_STATE_PK_PREFIX`
 - `MY_ALERT_STATE_SK`
+- `MY_HMI_HEARTBEAT_PK_PREFIX`
+- `MY_HMI_HEARTBEAT_SK`
+- `MY_HMI_HEARTBEAT_FIELD`
 
 Legacy fallback names are still supported during rollout, but the `MY_...` variants are preferred.
 
-Stale alerts are implemented as a scheduled Netlify Function, but they stay disabled until `MY_STALE_ALERT_ENABLED=true` is set.
+The scheduled function checks the dedicated HMI heartbeat every 15 minutes. By
+default it sends one email to `oi@biologik.it` when no complete `MI` measurement
+frame has arrived for more than 60 minutes. `MY_STALE_ALERT_ENABLED=false`
+disables it; recipient and threshold can be overridden with the variables above.

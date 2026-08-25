@@ -26,6 +26,11 @@ export const config = {
 };
 
 export const alertConfig = {
+  enabled: envAny(['MY_STALE_ALERT_ENABLED', 'STALE_ALERT_ENABLED'], 'true') !== 'false',
+  recipient: envAny(['MY_STALE_ALERT_RECIPIENT', 'STALE_ALERT_RECIPIENT'], 'oi@biologik.it'),
+  thresholdMinutes: Number(
+    envAny(['MY_STALE_ALERT_THRESHOLD_MINUTES', 'MY_STALE_ALERT_MINUTES', 'STALE_ALERT_THRESHOLD_MINUTES', 'STALE_ALERT_MINUTES'], '60')
+  ),
   smtpHost: envAny(['MY_SMTP_HOST', 'SMTP_HOST'], 'smtp.gmail.com'),
   smtpPort: Number(envAny(['MY_SMTP_PORT', 'SMTP_PORT'], '465')),
   smtpSecure: envAny(['MY_SMTP_SECURE', 'SMTP_SECURE'], 'true') !== 'false',
@@ -33,7 +38,10 @@ export const alertConfig = {
   smtpPass: envAny(['MY_SMTP_PASS', 'SMTP_PASS']),
   smtpFrom: envAny(['MY_SMTP_FROM', 'SMTP_FROM']),
   alertStatePkPrefix: envAny(['MY_ALERT_STATE_PK_PREFIX', 'ALERT_STATE_PK_PREFIX'], 'ALERT#'),
-  alertStateSk: envAny(['MY_ALERT_STATE_SK', 'ALERT_STATE_SK'], 'STALE#EMAIL')
+  alertStateSk: envAny(['MY_ALERT_STATE_SK', 'ALERT_STATE_SK'], 'STALE#EMAIL'),
+  heartbeatPkPrefix: envAny(['MY_HMI_HEARTBEAT_PK_PREFIX', 'HMI_HEARTBEAT_PK_PREFIX'], 'HEARTBEAT#'),
+  heartbeatSk: envAny(['MY_HMI_HEARTBEAT_SK', 'HMI_HEARTBEAT_SK'], 'HMI#VALUE'),
+  heartbeatField: envAny(['MY_HMI_HEARTBEAT_FIELD', 'HMI_HEARTBEAT_FIELD'], 'K.T1')
 };
 
 export const ddb = new DynamoDBClient({

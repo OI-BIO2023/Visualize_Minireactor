@@ -16,7 +16,10 @@ const demoSeriesByReactor = {
 
 const HISTORY_PAGE_LIMIT = 1200;
 const HISTORY_RENDER_LIMIT = 900;
-const CSV_QUERY_LIMIT = 5000;
+// Full HMI records are large. Keep each Netlify response comfortably below the
+// platform response-size limit; getAllData follows the cursor until all pages
+// have been downloaded.
+const CSV_QUERY_LIMIT = 1000;
 
 const buildDemoHistory = () => {
   const rawTemp = (value: number) => Math.round(value * 100);

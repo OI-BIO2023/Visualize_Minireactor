@@ -3,6 +3,7 @@ import os
 import sys
 import types
 import unittest
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -43,6 +44,34 @@ class RoutingTest(unittest.TestCase):
                 )
                 self.assertEqual(item["ident"], expected)
                 self.assertEqual(item["pk"], f"DEVICE#{expected}")
+
+    def test_complete_blank_ident_frame_is_a_heartbeat(self):
+        message = {"ident": "", "ts": "2026-08-24T00:00:00", "K.T1": 31.9}
+        item = lambda_function.build_item(message)
+        self.assertTrue(lambda_function.is_hmi_heartbeat(message, item))
+
+    def test_other_mi_values_do_not_mask_a_missing_measurement_frame(self):
+        message = {"ident": "MI", "ts": "2026-08-24T00:00:00", "TF1": 35.8}
+        item = lambda_function.build_item(message)
+        self.assertFalse(lambda_function.is_hmi_heartbeat(message, item))
+
+    def test_events_do_not_count_as_a_heartbeat(self):
+        message = {"ident": "MI", "ts": "2026-08-24T00:00:00", "K.T1": 31.9, "alarm": True}
+        item = lambda_function.build_item(message)
+        self.assertEqual(item["type"], "event")
+        self.assertFalse(lambda_function.is_hmi_heartbeat(message, item))
+
+    def test_other_installations_do_not_count_as_a_heartbeat(self):
+        message = {"ident": "LH", "ts": "2026-08-24T00:00:00", "K.T1": 31.9}
+        item = lambda_function.build_item(message)
+        self.assertFalse(lambda_function.is_hmi_heartbeat(message, item))
+
+    def test_flespi_receive_time_is_used_for_the_heartbeat(self):
+        message = {"timestamp": Decimal("1787578761.306232")}
+        self.assertEqual(
+            lambda_function.heartbeat_observed_at(message),
+            "2026-08-24T13:39:21.306232Z",
+        )
 
 
 if __name__ == "__main__":

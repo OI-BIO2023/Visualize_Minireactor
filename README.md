@@ -56,3 +56,5 @@ The scheduled function checks the dedicated HMI heartbeat every 15 minutes. By
 default it sends one email to `oi@biologik.it` when no complete `MI` measurement
 frame has arrived for more than 60 minutes. `MY_STALE_ALERT_ENABLED=false`
 disables it; recipient and threshold can be overridden with the variables above.
+Alert deduplication is stored in Netlify Blobs, so the Netlify AWS credentials
+only require the same read-only DynamoDB `Query` permission as the dashboard.

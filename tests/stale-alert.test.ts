@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  ddbSend: vi.fn(),
   fetchHmiHeartbeat: vi.fn(),
-  sendMail: vi.fn()
+  sendMail: vi.fn(),
+  stateGet: vi.fn(),
+  stateSetJSON: vi.fn()
+}));
+
+vi.mock('@netlify/blobs', () => ({
+  getStore: () => ({ get: mocks.stateGet, setJSON: mocks.stateSetJSON })
 }));
 
 vi.mock('../netlify/functions/_shared', () => ({
@@ -27,7 +32,6 @@ vi.mock('../netlify/functions/_shared', () => ({
     pkName: 'pk',
     skName: 'sk'
   },
-  ddb: { send: mocks.ddbSend },
   json: (statusCode: number, body: unknown) => ({ statusCode, body: JSON.stringify(body) }),
   validateIdent: (ident: string) => ident
 }));
@@ -47,8 +51,9 @@ import { handler } from '../netlify/functions/stale-alert';
 describe('scheduled HMI stale alert', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.ddbSend.mockResolvedValue({});
     mocks.sendMail.mockResolvedValue({ messageId: 'test' });
+    mocks.stateGet.mockResolvedValue(null);
+    mocks.stateSetJSON.mockResolvedValue({ modified: true });
   });
 
   it('sends an email when no complete MI heartbeat exists', async () => {
@@ -74,6 +79,6 @@ describe('scheduled HMI stale alert', () => {
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body)).toMatchObject({ sent: false, stale: false });
     expect(mocks.sendMail).not.toHaveBeenCalled();
-    expect(mocks.ddbSend).not.toHaveBeenCalled();
+    expect(mocks.stateGet).not.toHaveBeenCalled();
   });
 });

@@ -1,18 +1,14 @@
-import { GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { getStore } from '@netlify/blobs';
 import nodemailer from 'nodemailer';
 import { formatStaleDuration, isMissingOrStale, minutesSince } from '../../src/lib/staleness';
 import { fetchHmiHeartbeat } from './_heartbeat';
-import { alertConfig, config as sharedConfig, ddb, json, validateIdent } from './_shared';
+import { alertConfig, config as sharedConfig, json, validateIdent } from './_shared';
 
 export const config = {
   schedule: '*/15 * * * *'
 };
 
-const buildStateKey = (ident: string) => ({
-  [sharedConfig.pkName]: { S: `${alertConfig.alertStatePkPrefix}${ident}` },
-  [sharedConfig.skName]: { S: alertConfig.alertStateSk }
-});
+type AlertState = { lastAlertedTimestamp?: string };
 
 const buildEmailBody = (ident: string, latestTimestamp: string | null, thresholdMinutes: number) => {
   const ageMinutes = minutesSince(latestTimestamp);
@@ -56,14 +52,11 @@ export const handler = async () => {
       return json(500, { ok: false, sent: false, message: 'SMTP alert configuration is incomplete' });
     }
 
-    const state = await ddb.send(
-      new GetItemCommand({
-        TableName: sharedConfig.tableName,
-        Key: buildStateKey(ident),
-        ConsistentRead: true
-      })
-    );
-    const existingState = state.Item ? unmarshall(state.Item) : null;
+    const stateStore = getStore('minireactor-alert-state');
+    const existingState = await stateStore.get(`stale-${ident}`, {
+      type: 'json',
+      consistency: 'strong'
+    }) as AlertState | null;
     const alertToken = latestTimestamp ?? 'NO_HEARTBEAT';
     if (typeof existingState?.lastAlertedTimestamp === 'string' && existingState.lastAlertedTimestamp === alertToken) {
       return json(200, { ok: true, sent: false, stale: true, alreadyNotified: true, timestamp: latestTimestamp });
@@ -87,18 +80,12 @@ export const handler = async () => {
       text: buildEmailBody(ident, latestTimestamp, alertConfig.thresholdMinutes)
     });
 
-    await ddb.send(
-      new PutItemCommand({
-        TableName: sharedConfig.tableName,
-        Item: {
-          ...buildStateKey(ident),
-          ident: { S: ident },
-          lastAlertedTimestamp: { S: alertToken },
-          lastAlertedAt: { S: new Date().toISOString() },
-          thresholdMinutes: { N: String(alertConfig.thresholdMinutes) }
-        }
-      })
-    );
+    await stateStore.setJSON(`stale-${ident}`, {
+      ident,
+      lastAlertedTimestamp: alertToken,
+      lastAlertedAt: new Date().toISOString(),
+      thresholdMinutes: alertConfig.thresholdMinutes
+    });
 
     return json(200, { ok: true, sent: true, stale: true, timestamp: latestTimestamp });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { GetItemCommand, QueryCommand, type AttributeValue } from '@aws-sdk/client-dynamodb';
+import { QueryCommand, type AttributeValue } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { alertConfig, config, ddb, normalizeRecord } from './_shared';
 
@@ -53,17 +53,23 @@ export const fetchHmiHeartbeat = async (ident: string, lookbackMinutes = alertCo
   if (!config.tableName) return null;
 
   const response = await ddb.send(
-    new GetItemCommand({
+    new QueryCommand({
       TableName: config.tableName,
-      Key: {
-        [config.pkName]: { S: `${alertConfig.heartbeatPkPrefix}${ident}` },
-        [config.skName]: { S: alertConfig.heartbeatSk }
+      KeyConditionExpression: '#pk = :pk AND #sk = :sk',
+      ExpressionAttributeNames: {
+        '#pk': config.pkName,
+        '#sk': config.skName
       },
-      ConsistentRead: true
+      ExpressionAttributeValues: {
+        ':pk': { S: `${alertConfig.heartbeatPkPrefix}${ident}` },
+        ':sk': { S: alertConfig.heartbeatSk }
+      },
+      ConsistentRead: true,
+      Limit: 1
     })
   );
-  if (response.Item) {
-    const item = unmarshall(response.Item);
+  if (response.Items?.[0]) {
+    const item = unmarshall(response.Items[0]);
     if (typeof item.lastSeenAt === 'string') return { ident, lastSeenAt: item.lastSeenAt };
   }
 

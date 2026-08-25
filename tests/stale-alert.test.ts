@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@netlify/blobs', () => ({
+  connectLambda: vi.fn(),
   getStore: () => ({ get: mocks.stateGet, setJSON: mocks.stateSetJSON })
 }));
 

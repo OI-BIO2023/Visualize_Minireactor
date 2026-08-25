@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { connectLambda, getStore } from '@netlify/blobs';
 import nodemailer from 'nodemailer';
 import { formatStaleDuration, isMissingOrStale, minutesSince } from '../../src/lib/staleness';
 import { fetchHmiHeartbeat } from './_heartbeat';
@@ -9,6 +9,7 @@ export const config = {
 };
 
 type AlertState = { lastAlertedTimestamp?: string };
+type LambdaCompatEvent = { blobs?: string; headers?: Record<string, string> };
 
 const buildEmailBody = (ident: string, latestTimestamp: string | null, thresholdMinutes: number) => {
   const ageMinutes = minutesSince(latestTimestamp);
@@ -26,7 +27,7 @@ const buildEmailBody = (ident: string, latestTimestamp: string | null, threshold
   ].join('\n');
 };
 
-export const handler = async () => {
+export const handler = async (event?: LambdaCompatEvent) => {
   try {
     if (!sharedConfig.tableName) {
       return json(500, { ok: false, sent: false, message: 'DDB_TABLE is not configured' });
@@ -38,6 +39,10 @@ export const handler = async () => {
 
     if (!Number.isFinite(alertConfig.thresholdMinutes) || alertConfig.thresholdMinutes <= 0) {
       return json(500, { ok: false, sent: false, message: 'Stale alert threshold is invalid' });
+    }
+
+    if (event?.blobs && event.headers) {
+      connectLambda(event as Parameters<typeof connectLambda>[0]);
     }
 
     const ident = validateIdent('MI');

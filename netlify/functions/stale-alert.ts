@@ -58,10 +58,7 @@ export const handler = async (event?: LambdaCompatEvent) => {
     }
 
     const stateStore = getStore('minireactor-alert-state');
-    const existingState = await stateStore.get(`stale-${ident}`, {
-      type: 'json',
-      consistency: 'strong'
-    }) as AlertState | null;
+    const existingState = await stateStore.get(`stale-${ident}`, { type: 'json' }) as AlertState | null;
     const alertToken = latestTimestamp ?? 'NO_HEARTBEAT';
     if (typeof existingState?.lastAlertedTimestamp === 'string' && existingState.lastAlertedTimestamp === alertToken) {
       return json(200, { ok: true, sent: false, stale: true, alreadyNotified: true, timestamp: latestTimestamp });

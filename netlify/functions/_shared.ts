@@ -41,7 +41,9 @@ export const alertConfig = {
   alertStateSk: envAny(['MY_ALERT_STATE_SK', 'ALERT_STATE_SK'], 'STALE#EMAIL'),
   heartbeatPkPrefix: envAny(['MY_HMI_HEARTBEAT_PK_PREFIX', 'HMI_HEARTBEAT_PK_PREFIX'], 'HEARTBEAT#'),
   heartbeatSk: envAny(['MY_HMI_HEARTBEAT_SK', 'HMI_HEARTBEAT_SK'], 'HMI#VALUE'),
-  heartbeatField: envAny(['MY_HMI_HEARTBEAT_FIELD', 'HMI_HEARTBEAT_FIELD'], 'K.T1')
+  heartbeatField: envAny(['MY_HMI_HEARTBEAT_FIELD', 'HMI_HEARTBEAT_FIELD'], 'K.T1'),
+  sourceLagAllowanceMinutes: Number(envAny(['MY_HMI_SOURCE_LAG_ALLOWANCE_MINUTES', 'HMI_SOURCE_LAG_ALLOWANCE_MINUTES'], '180')),
+  valueRetentionDays: Number(envAny(['MY_VALUE_RETENTION_DAYS', 'VALUE_RETENTION_DAYS'], '90'))
 };
 
 export const ddb = new DynamoDBClient({

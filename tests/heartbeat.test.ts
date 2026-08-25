@@ -8,7 +8,9 @@ vi.mock('../netlify/functions/_shared', () => ({
     heartbeatPkPrefix: 'HEARTBEAT#',
     heartbeatSk: 'HMI#VALUE',
     heartbeatField: 'K.T1',
-    thresholdMinutes: 60
+    thresholdMinutes: 60,
+    sourceLagAllowanceMinutes: 180,
+    valueRetentionDays: 90
   },
   config: {
     tableName: 'plant_ingest',
@@ -52,5 +54,29 @@ describe('HMI heartbeat lookup', () => {
     mocks.ddbSend.mockResolvedValueOnce({}).mockResolvedValueOnce({ Items: [] });
 
     await expect(fetchHmiHeartbeat('MI', 60)).resolves.toBeNull();
+  });
+
+  it('uses the inferred AWS ingest time instead of the delayed HMI source time', async () => {
+    const observedAt = new Date('2026-08-25T13:03:47.000Z');
+    const expiresAt = Math.floor(observedAt.getTime() / 1000) + 90 * 86_400;
+    mocks.ddbSend
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({
+        Items: [
+          marshall({
+            pk: 'DEVICE#MI',
+            sk: 'TS#2026-08-25T11:50:42.334077Z#VALUE',
+            type: 'value',
+            ts: '2026-08-25T11:50:42.334077Z',
+            expiresAt,
+            payload: { 'K.T1': 31.9 }
+          })
+        ]
+      });
+
+    await expect(fetchHmiHeartbeat('MI', 60)).resolves.toEqual({
+      ident: 'MI',
+      lastSeenAt: observedAt.toISOString()
+    });
   });
 });

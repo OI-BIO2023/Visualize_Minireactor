@@ -49,6 +49,8 @@ npm run build
 - `MY_HMI_HEARTBEAT_PK_PREFIX`
 - `MY_HMI_HEARTBEAT_SK`
 - `MY_HMI_HEARTBEAT_FIELD`
+- `MY_HMI_SOURCE_LAG_ALLOWANCE_MINUTES`
+- `MY_VALUE_RETENTION_DAYS`
 
 Legacy fallback names are still supported during rollout, but the `MY_...` variants are preferred.
 

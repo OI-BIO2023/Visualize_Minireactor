@@ -9,7 +9,8 @@ export type HmiHeartbeat = {
 
 const fetchRecentMeasurement = async (ident: string, lookbackMinutes: number): Promise<HmiHeartbeat | null> => {
   const now = new Date();
-  const start = new Date(now.getTime() - lookbackMinutes * 60_000).toISOString();
+  const queryMinutes = lookbackMinutes + alertConfig.sourceLagAllowanceMinutes;
+  const start = new Date(now.getTime() - queryMinutes * 60_000).toISOString();
   let ExclusiveStartKey: Record<string, AttributeValue> | undefined;
 
   do {
@@ -39,8 +40,15 @@ const fetchRecentMeasurement = async (ident: string, lookbackMinutes: number): P
     );
     const item = response.Items?.[0];
     if (item) {
-      const normalized = normalizeRecord(unmarshall(item));
+      const normalized = normalizeRecord(unmarshall(item)) as (Record<string, unknown> & { timestamp?: unknown }) | null;
       const timestamp = normalized && typeof normalized.timestamp === 'string' ? normalized.timestamp : null;
+      const expiresAt = normalized && typeof normalized.expiresAt === 'number' ? normalized.expiresAt : null;
+      if (expiresAt != null && Number.isFinite(alertConfig.valueRetentionDays)) {
+        const inferredIngestTime = (expiresAt - alertConfig.valueRetentionDays * 86_400) * 1000;
+        if (Number.isFinite(inferredIngestTime)) {
+          return { ident, lastSeenAt: new Date(inferredIngestTime).toISOString() };
+        }
+      }
       if (timestamp) return { ident, lastSeenAt: timestamp };
     }
     ExclusiveStartKey = response.LastEvaluatedKey;
@@ -74,7 +82,8 @@ export const fetchHmiHeartbeat = async (ident: string, lookbackMinutes = alertCo
   }
 
   // Safe rollout fallback: until the AWS ingest Lambda writes the dedicated
-  // heartbeat, inspect only the recent threshold window for a complete K.T1
-  // frame. Other MI value groups and events cannot mask an outage.
+  // heartbeat, inspect recent complete K.T1 frames. Their source timestamp can
+  // lag behind packet arrival, so infer the actual AWS ingest time from the TTL.
+  // Other MI value groups and events cannot mask an outage.
   return fetchRecentMeasurement(ident, lookbackMinutes);
 };
